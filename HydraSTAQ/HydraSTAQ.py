@@ -1,13 +1,13 @@
 import os
 import numpy as np
-from math import sqrt
-from time import time, process_time
 from cv2 import medianBlur, imread, imwrite, warpAffine, IMREAD_GRAYSCALE
+from math import sqrt
 from matplotlib import pyplot as plt
 from scipy.io import loadmat, savemat
 from scipy.stats import scoreatpercentile
 from skimage.measure import regionprops, label as lbl
-from tkinter import Tk, IntVar, DoubleVar, StringVar, Scale, Radiobutton, Button, Label, HORIZONTAL
+from time import time, process_time
+from tkinter import Tk, IntVar, DoubleVar, StringVar, Scale, Radiobutton, Button, Label, HORIZONTAL, filedialog
 
 
 class Config:  
