@@ -1,15 +1,13 @@
-import math
-import time
 import os
 import numpy as np
-import cv2
-import matplotlib.pyplot as plt
-import scipy.io as sio
+from math import sqrt
+from time import time, process_time
+from cv2 import medianBlur, imread, imwrite, warpAffine, IMREAD_GRAYSCALE
+from matplotlib import pyplot as plt
+from scipy.io import loadmat, savemat
 from scipy.stats import scoreatpercentile
-from skimage.measure import regionprops
-from skimage.measure import label as lbl
-from tkinter import *
-from tkinter import filedialog
+from skimage.measure import regionprops, label as lbl
+from tkinter import Tk, IntVar, DoubleVar, StringVar, Scale, Radiobutton, Button, Label, HORIZONTAL
 
 
 class Config:  
@@ -50,7 +48,7 @@ def analyzeStarField(lightFrame, config):
     else:
         threshold = 0.88
         factor = 1
-    filteredImage = cv2.medianBlur(factor*lightFrame,3)   
+    filteredImage = medianBlur(factor*lightFrame,3)   
     BW = filteredImage > (threshold*255) # HACK
     labels = lbl(BW)
     stats = regionprops(labels)
@@ -66,7 +64,7 @@ def triangles(x, y):
     for i in range(len(x)-2):
         for j in range (i+1, len(x)-1):
             for k in range(j+1, len(x)): 
-                d = [math.sqrt((x[i]-x[j])**2 +(y[i]-y[j])**2), math.sqrt((x[j]-x[k])**2 +(y[j]-y[k])**2), math.sqrt((x[i]-x[k])**2 +(y[i]-y[k])**2)];                        
+                d = [sqrt((x[i]-x[j])**2 +(y[i]-y[j])**2), sqrt((x[j]-x[k])**2 +(y[j]-y[k])**2), sqrt((x[i]-x[k])**2 +(y[i]-y[k])**2)];                        
                 a = sorted(d) 
                 m = len(a)//2
                 u = ((a[m]+a[-m-1])/2)/max(d) #Median calculation trick
@@ -146,8 +144,8 @@ def alignFrames(refVectorX, refVectorY, refTriangles, topMatches, xvec, yvec):
 
 
 def readImages(config):
-    start_time = time.time()
-    start_timeP = time.process_time()
+    start_time = time()
+    start_timeP = process_time()
 
     xvec = []
     yvec = []
@@ -160,7 +158,7 @@ def readImages(config):
     yvec = np.empty(len(fileNameArray), dtype=object)
     
     for n in range(len(fileNameArray)):  
-        lightFrame = np.asarray(cv2.imread(fileNameArray[n], cv2.IMREAD_GRAYSCALE))
+        lightFrame = np.asarray(imread(fileNameArray[n], IMREAD_GRAYSCALE))
         lightFrame = lightFrame[config.ROI_y[0]:config.ROI_y[1], config.ROI_x[0]:config.ROI_x[1]]
 
         background.append(np.sum(lightFrame))
@@ -188,33 +186,33 @@ def readImages(config):
     refVectorY = yvec[q]
     maxQualFramePath = fileNameArray[q]
 
-    end_time = time.time()
-    end_timeP = time.process_time()
+    end_time = time()
+    end_timeP = process_time()
     print("\n")
     print("Elapsed time:", f'{end_time - start_time:.4f}') 
     print("Elapsed CPU time:", f'{end_timeP - start_timeP:.4f}') 
     
-    sio.savemat(os.path.join(config.basepath, 'parametersPY', f'xvec{config.filter}.mat'), {'xvec': xvec})
-    sio.savemat(os.path.join(config.basepath, 'parametersPY', f'yvec{config.filter}.mat'), {'yvec': yvec})
-    sio.savemat(os.path.join(config.basepath, 'parametersPY', f'background{config.filter}.mat'), {'background': background})
-    sio.savemat(os.path.join(config.basepath, 'parametersPY', f'qual{config.filter}.mat'), {'qual': qual})
-    sio.savemat(os.path.join(config.basepath, 'parametersPY', f'maxQualFramePath{config.filter}.mat'), {'maxQualFramePath': maxQualFramePath})
-    sio.savemat(os.path.join(config.basepath, 'parametersPY', f'refVectorX{config.filter}.mat'), {'refVectorX': refVectorX})
-    sio.savemat(os.path.join(config.basepath, 'parametersPY', f'refVectorY{config.filter}.mat'), {'refVectorY': refVectorY})
+    savemat(os.path.join(config.basepath, 'parametersPY', f'xvec{config.filter}.mat'), {'xvec': xvec})
+    savemat(os.path.join(config.basepath, 'parametersPY', f'yvec{config.filter}.mat'), {'yvec': yvec})
+    savemat(os.path.join(config.basepath, 'parametersPY', f'background{config.filter}.mat'), {'background': background})
+    savemat(os.path.join(config.basepath, 'parametersPY', f'qual{config.filter}.mat'), {'qual': qual})
+    savemat(os.path.join(config.basepath, 'parametersPY', f'maxQualFramePath{config.filter}.mat'), {'maxQualFramePath': maxQualFramePath})
+    savemat(os.path.join(config.basepath, 'parametersPY', f'refVectorX{config.filter}.mat'), {'refVectorX': refVectorX})
+    savemat(os.path.join(config.basepath, 'parametersPY', f'refVectorY{config.filter}.mat'), {'refVectorY': refVectorY})
 
 
 def computeOffsets(config):
-    start_time = time.time()
-    start_timeP = time.process_time()
+    start_time = time()
+    start_timeP = process_time()
 
-    xvec = sio.loadmat(os.path.join(config.basepath, 'parametersPY', f'xvec{config.filter}.mat'))['xvec'].ravel()
-    yvec = sio.loadmat(os.path.join(config.basepath, 'parametersPY', f'yvec{config.filter}.mat'))['yvec'].ravel()
-    qual = sio.loadmat(os.path.join(config.basepath, 'parametersPY', f'qual{config.filter}.mat'))['qual'].ravel()
-    maxQualFramePath = sio.loadmat(os.path.join(config.basepath, 'parametersPY', f'maxQualFramePath{config.filter}.mat'))['maxQualFramePath'].ravel()
-    refVectorX = sio.loadmat(os.path.join(config.basepath, 'parametersPY', f'refVectorX{config.filter}.mat'))['refVectorX'].ravel()
-    refVectorY = sio.loadmat(os.path.join(config.basepath, 'parametersPY', f'refVectorY{config.filter}.mat'))['refVectorY'].ravel()
-    refVectorXAlign = sio.loadmat(os.path.join(config.basepath, 'parametersPY', f'refVectorX{config.align}.mat'))['refVectorX'].ravel()
-    refVectorYAlign = sio.loadmat(os.path.join(config.basepath, 'parametersPY', f'refVectorY{config.align}.mat'))['refVectorY'].ravel()
+    xvec = loadmat(os.path.join(config.basepath, 'parametersPY', f'xvec{config.filter}.mat'))['xvec'].ravel()
+    yvec = loadmat(os.path.join(config.basepath, 'parametersPY', f'yvec{config.filter}.mat'))['yvec'].ravel()
+    qual = loadmat(os.path.join(config.basepath, 'parametersPY', f'qual{config.filter}.mat'))['qual'].ravel()
+    maxQualFramePath = loadmat(os.path.join(config.basepath, 'parametersPY', f'maxQualFramePath{config.filter}.mat'))['maxQualFramePath'].ravel()
+    refVectorX = loadmat(os.path.join(config.basepath, 'parametersPY', f'refVectorX{config.filter}.mat'))['refVectorX'].ravel()
+    refVectorY = loadmat(os.path.join(config.basepath, 'parametersPY', f'refVectorY{config.filter}.mat'))['refVectorY'].ravel()
+    refVectorXAlign = loadmat(os.path.join(config.basepath, 'parametersPY', f'refVectorX{config.align}.mat'))['refVectorX'].ravel()
+    refVectorYAlign = loadmat(os.path.join(config.basepath, 'parametersPY', f'refVectorY{config.align}.mat'))['refVectorY'].ravel()
 
     qt = scoreatpercentile(qual, config.discardPercentage)
 
@@ -245,11 +243,11 @@ def computeOffsets(config):
     th = th[discardFrames == 0]
     selectedFrames = selectedFrames[discardFrames == 0]
 
-    maxQualFrame = np.asarray(cv2.imread(maxQualFramePath[0], cv2.IMREAD_GRAYSCALE))
+    maxQualFrame = np.asarray(imread(maxQualFramePath[0], IMREAD_GRAYSCALE))
     maxQualFrame = maxQualFrame[config.ROI_y[0]:config.ROI_y[1], config.ROI_x[0]:config.ROI_x[1]]
 
-    end_time = time.time()
-    end_timeP = time.process_time()
+    end_time = time()
+    end_timeP = process_time()
     
     print("Computed offsets for", f'{len(selectedFrames)}', "frames")
     print("Elapsed time:", f'{end_time - start_time:.4f}') 
@@ -285,25 +283,25 @@ def computeOffsets(config):
     #plt.legend(['Quality', 'Background'])
     #plt.show() 
 
-    sio.savemat(os.path.join(config.basepath, 'parametersPY', f'dx{config.filter}.mat'), {'dx': dx})
-    sio.savemat(os.path.join(config.basepath, 'parametersPY', f'dy{config.filter}.mat'), {'dy': dy})
-    sio.savemat(os.path.join(config.basepath, 'parametersPY', f'th{config.filter}.mat'), {'th': th})
-    sio.savemat(os.path.join(config.basepath, 'parametersPY', f'selectedFrames{config.filter}.mat'), {'selectedFrames': selectedFrames})
+    savemat(os.path.join(config.basepath, 'parametersPY', f'dx{config.filter}.mat'), {'dx': dx})
+    savemat(os.path.join(config.basepath, 'parametersPY', f'dy{config.filter}.mat'), {'dy': dy})
+    savemat(os.path.join(config.basepath, 'parametersPY', f'th{config.filter}.mat'), {'th': th})
+    savemat(os.path.join(config.basepath, 'parametersPY', f'selectedFrames{config.filter}.mat'), {'selectedFrames': selectedFrames})
 
 
 def stackImages(config):  
-    start_time = time.time()
-    start_timeP = time.process_time()
+    start_time = time()
+    start_timeP = process_time()
 
-    dx = sio.loadmat(os.path.join(config.basepath, 'parametersPY', f'dx{config.filter}.mat'))['dx'].ravel()
-    dy = sio.loadmat(os.path.join(config.basepath, 'parametersPY', f'dy{config.filter}.mat'))['dy'].ravel()
-    th = sio.loadmat(os.path.join(config.basepath, 'parametersPY', f'th{config.filter}.mat'))['th'].ravel()
-    selectedFrames = sio.loadmat(os.path.join(config.basepath, 'parametersPY', f'selectedFrames{config.filter}.mat'))['selectedFrames'].ravel()
-    background = sio.loadmat(os.path.join(config.basepath, 'parametersPY', f'background{config.filter}.mat'))['background'].ravel()
+    dx = loadmat(os.path.join(config.basepath, 'parametersPY', f'dx{config.filter}.mat'))['dx'].ravel()
+    dy = loadmat(os.path.join(config.basepath, 'parametersPY', f'dy{config.filter}.mat'))['dy'].ravel()
+    th = loadmat(os.path.join(config.basepath, 'parametersPY', f'th{config.filter}.mat'))['th'].ravel()
+    selectedFrames = loadmat(os.path.join(config.basepath, 'parametersPY', f'selectedFrames{config.filter}.mat'))['selectedFrames'].ravel()
+    background = loadmat(os.path.join(config.basepath, 'parametersPY', f'background{config.filter}.mat'))['background'].ravel()
 
     darkPath = config.darkPathH if config.filter == "H" else config.darkPathRGB
 
-    darkFrame = cv2.imread(os.path.join(config.basepath, darkPath), cv2.IMREAD_GRAYSCALE)  
+    darkFrame = imread(os.path.join(config.basepath, darkPath), IMREAD_GRAYSCALE)  
     darkFrame = darkFrame[config.ROI_y[0]:config.ROI_y[1], config.ROI_x[0]:config.ROI_x[1]]
     darkFrame = darkFrame.astype(np.float32)/255.0 
 
@@ -314,14 +312,14 @@ def stackImages(config):
     fileNameArray = getFilenames(config)    
 
     for i in range(len(selectedFrames)):
-        lightFrame = np.asarray(cv2.imread(fileNameArray[selectedFrames[i]],cv2.IMREAD_GRAYSCALE))
+        lightFrame = np.asarray(imread(fileNameArray[selectedFrames[i]],IMREAD_GRAYSCALE))
         lightFrame = lightFrame[config.ROI_y[0]:config.ROI_y[1], config.ROI_x[0]:config.ROI_x[1]]
         lightFrame = lightFrame.astype(np.float32)/255.0
         lightFrame *= max(background[selectedFrames])/background[selectedFrames[i]]
         lightFrame -= darkFrame
          
         M = np.float32([[np.cos(th[i]), -np.sin(th[i]), dx[i]], [np.sin(th[i]), np.cos(th[i]), dy[i]]])
-        lightFrame = cv2.warpAffine(lightFrame,M,(lightFrame.shape[1], lightFrame.shape[0]))
+        lightFrame = warpAffine(lightFrame,M,(lightFrame.shape[1], lightFrame.shape[0]))
        
         temparray[:, :, tempcount-1] = lightFrame[:(config.ROI_y[1] - config.ROI_y[0]), :(config.ROI_x[1] - config.ROI_x[0])]
 
@@ -333,8 +331,8 @@ def stackImages(config):
             temparray = np.zeros(((config.ROI_y[1] - config.ROI_y[0]), (config.ROI_x[1] - config.ROI_x[0]), config.medianOver), dtype=np.float32)
             tempcount = 1;
 
-    end_time = time.time()
-    end_timeP = time.process_time()
+    end_time = time()
+    end_timeP = process_time()
     print("\n")
     print("Elapsed time:", f'{end_time - start_time:.4f}') 
     print("Elapsed CPU time:", f'{end_timeP - start_timeP:.4f}') 
@@ -344,7 +342,7 @@ def stackImages(config):
     plt.axis('off')
     plt.show()
 
-    cv2.imwrite(os.path.join(config.basepath, 'outPY', f'{len(selectedFrames)}_{config.filter}.tif'), stackFrame)
+    imwrite(os.path.join(config.basepath, 'outPY', f'{len(selectedFrames)}_{config.filter}.tif'), stackFrame)
 
 
 def selection():
@@ -393,9 +391,9 @@ v4 = DoubleVar()
 
 pathString = StringVar()
 
-t0 = Radiobutton(win, text="Read images", variable=todoSelector, value=0).grid(row=0, sticky=W)
-t1 = Radiobutton(win, text="Compute offsets", variable=todoSelector, value=1).grid(row=1, sticky=W)
-t2 = Radiobutton(win, text="Stack images", variable=todoSelector, value=2).grid(row=2,  sticky=W)
+t0 = Radiobutton(win, text="Read images", variable=todoSelector, value=0).grid(row=0, sticky='w')
+t1 = Radiobutton(win, text="Compute offsets", variable=todoSelector, value=1).grid(row=1, sticky='w')
+t2 = Radiobutton(win, text="Stack images", variable=todoSelector, value=2).grid(row=2,  sticky='w')
 B1 = Button(win, text ="Execute", command = selection).grid(row=3)
 label = Label(text="Make a choice").grid(row=4)
 
@@ -411,17 +409,17 @@ s2 = Scale(win, variable = v2, from_ = 3, to = 8, orient = HORIZONTAL); s2.grid(
 s3 = Scale(win, variable = v3, from_ = 3, to = 8, orient = HORIZONTAL); s3.grid(row=3, column=2); s3.set(4)
 s4 = Scale(win, variable = v4, from_ = 10, to = 30, orient = HORIZONTAL); s4.grid(row=4, column=2); s4.set(30)
 
-f0 = Radiobutton(win, text="Process L", variable=filterSelector, value=0).grid(row=0, column=3, sticky=W)
-f1 = Radiobutton(win, text="Process R", variable=filterSelector, value=1).grid(row=1, column=3, sticky=W)
-f2 = Radiobutton(win, text="Process G", variable=filterSelector, value=2).grid(row=2, column=3, sticky=W)
-f3 = Radiobutton(win, text="Process B", variable=filterSelector, value=3).grid(row=3, column=3, sticky=W)
-f3 = Radiobutton(win, text="Process Ha", variable=filterSelector, value=4).grid(row=4, column=3, sticky=W)
+f0 = Radiobutton(win, text="Process L", variable=filterSelector, value=0).grid(row=0, column=3, sticky='w')
+f1 = Radiobutton(win, text="Process R", variable=filterSelector, value=1).grid(row=1, column=3, sticky='w')
+f2 = Radiobutton(win, text="Process G", variable=filterSelector, value=2).grid(row=2, column=3, sticky='w')
+f3 = Radiobutton(win, text="Process B", variable=filterSelector, value=3).grid(row=3, column=3, sticky='w')
+f3 = Radiobutton(win, text="Process Ha", variable=filterSelector, value=4).grid(row=4, column=3, sticky='w')
 
-a0 = Radiobutton(win, text="Align by L", variable=alignSelector, value=0).grid(row=0, column=4, sticky=W)
-a1 = Radiobutton(win, text="Align by R", variable=alignSelector, value=1).grid(row=1, column=4, sticky=W)
-a2 = Radiobutton(win, text="Align by G", variable=alignSelector, value=2).grid(row=2, column=4, sticky=W)
-a3 = Radiobutton(win, text="Align by B", variable=alignSelector, value=3).grid(row=3, column=4, sticky=W)
-a3 = Radiobutton(win, text="Align by Ha", variable=alignSelector, value=4).grid(row=4, column=4, sticky=W)
+a0 = Radiobutton(win, text="Align by L", variable=alignSelector, value=0).grid(row=0, column=4, sticky='w')
+a1 = Radiobutton(win, text="Align by R", variable=alignSelector, value=1).grid(row=1, column=4, sticky='w')
+a2 = Radiobutton(win, text="Align by G", variable=alignSelector, value=2).grid(row=2, column=4, sticky='w')
+a3 = Radiobutton(win, text="Align by B", variable=alignSelector, value=3).grid(row=3, column=4, sticky='w')
+a3 = Radiobutton(win, text="Align by Ha", variable=alignSelector, value=4).grid(row=4, column=4, sticky='w')
 
 B2 = Button(text="Select base path", command=selectPathButton).grid(row=0, column=5)
 Label(master=win,textvariable=pathString).grid(row=1, column=5)
