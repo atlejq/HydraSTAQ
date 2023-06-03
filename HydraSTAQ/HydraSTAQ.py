@@ -16,7 +16,7 @@ class Config:
         self.basepath = 'C:/F/astro/matlab/m1test/'
         self.darkPathRGB = 'darks/darkframe10.tif'
         self.darkPathH = 'darks/darkframe20.tif'
-        self.inputFormat = '.png'
+        self.inputFormat = '.tif'
         self.filter = 'R'
         self.align = 'R'
         self.maxStars = 10
@@ -48,8 +48,9 @@ def analyzeStarField(lightFrame, config):
     else:
         threshold = 0.88
         factor = 1
-    filteredImage = medianBlur(factor*lightFrame,3)   
-    BW = filteredImage > (threshold*255) # HACK
+    filteredImage = medianBlur(factor*lightFrame,3) 
+    
+    BW = filteredImage > threshold*(255**lightFrame.dtype.itemsize) 
     labels = lbl(BW)
     stats = regionprops(labels)
     starMatrix = np.array([[stat.bbox[1], stat.bbox[0], stat.bbox[2]-stat.bbox[0], stat.bbox[3]-stat.bbox[1], np.sqrt((stat.bbox[2]-stat.bbox[0])**2 + (stat.bbox[3]-stat.bbox[1])**2)] for stat in stats])
@@ -254,7 +255,7 @@ def computeOffsets(config):
     print("Elapsed CPU time:", f'{end_timeP - start_timeP:.4f}', "\n") 
 
     plt.figure(1)
-    plt.imshow(maxQualFrame, cmap='gray', vmin = 0, vmax = 255)
+    plt.imshow(maxQualFrame, cmap='gray', vmin = 0, vmax = (255**maxQualFrame.dtype.itemsize))
     plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0, hspace = 0, wspace = 0)
     plt.axis('off')
     plt.scatter(refVectorXAlign, refVectorYAlign, s=100, facecolors='none', edgecolors='r')
@@ -303,7 +304,7 @@ def stackImages(config):
 
     darkFrame = imread(os.path.join(config.basepath, darkPath), IMREAD_GRAYSCALE)  
     darkFrame = darkFrame[config.ROI_y[0]:config.ROI_y[1], config.ROI_x[0]:config.ROI_x[1]]
-    darkFrame = darkFrame.astype(np.float32)/255.0 
+    darkFrame = darkFrame.astype(np.float32)/(255.0**darkFrame.dtype.itemsize)
 
     stackFrame = np.zeros(((config.ROI_y[1] - config.ROI_y[0]), (config.ROI_x[1] - config.ROI_x[0])), dtype=np.float32)
     temparray = np.zeros(((config.ROI_y[1] - config.ROI_y[0]), (config.ROI_x[1] - config.ROI_x[0]), config.medianOver), dtype=np.float32)
@@ -314,7 +315,7 @@ def stackImages(config):
     for i in range(len(selectedFrames)):
         lightFrame = np.asarray(imread(fileNameArray[selectedFrames[i]],IMREAD_GRAYSCALE))
         lightFrame = lightFrame[config.ROI_y[0]:config.ROI_y[1], config.ROI_x[0]:config.ROI_x[1]]
-        lightFrame = lightFrame.astype(np.float32)/255.0
+        lightFrame = lightFrame.astype(np.float32)/(255**lightFrame.dtype.itemsize)
         lightFrame *= max(background[selectedFrames])/background[selectedFrames[i]]
         lightFrame -= darkFrame
          
@@ -337,12 +338,12 @@ def stackImages(config):
     print("Elapsed time:", f'{end_time - start_time:.4f}') 
     print("Elapsed CPU time:", f'{end_timeP - start_timeP:.4f}', "\n") 
 
+    imwrite(os.path.join(config.basepath, 'outPY', f'{len(selectedFrames)}_{config.filter}.tif'), stackFrame)
+
     plt.imshow(stackFrame, cmap='gray')
     plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0, hspace = 0, wspace = 0)
     plt.axis('off')
     plt.show()
-
-    imwrite(os.path.join(config.basepath, 'outPY', f'{len(selectedFrames)}_{config.filter}.tif'), stackFrame)
 
 
 def selection():
