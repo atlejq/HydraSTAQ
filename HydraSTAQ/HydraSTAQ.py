@@ -13,17 +13,17 @@ from tkinter import Tk, IntVar, DoubleVar, StringVar, Scale, Radiobutton, Button
 class Config:  
     # Configuration class to hold and manage all the configuration parameters.   
     def __init__(self):
-        self.basepath = 'C:/F/astro/matlab/m1test/'
+        self.basepath = str
         self.darkPathRGB = 'darks/darkframe10.tif'
         self.darkPathH = 'darks/darkframe20.tif'
-        self.inputFormat = '.tif'
-        self.filter = 'R'
-        self.align = 'R'
-        self.maxStars = 10
-        self.discardPercentage = 10
-        self.topMatchesMasterAlign = 3
-        self.topMatchesMonoAlign = 3
-        self.medianOver = 10
+        self.inputFormat = str
+        self.filter = str
+        self.align = str
+        self.maxStars = int
+        self.discardPercentage = int
+        self.topMatchesMasterAlign = int
+        self.topMatchesMonoAlign = int
+        self.medianOver = int
         self.ROI_y =  [1, 2822]
         self.ROI_x =  [1, 4144]
 
@@ -188,7 +188,6 @@ def readImages(config):
         refVectorX = xvec[q]
         refVectorY = yvec[q]
         maxQualFramePath = fileNameArray[q]
-
 
         end_time = time()
         end_timeP = process_time()
