@@ -190,8 +190,8 @@ def readImages(config):
     end_timeP = process_time()
     print("\n")
     print("Elapsed time:", f'{end_time - start_time:.4f}') 
-    print("Elapsed CPU time:", f'{end_timeP - start_timeP:.4f}') 
-    
+    print("Elapsed CPU time:", f'{end_timeP - start_timeP:.4f}', "\n") 
+
     savemat(os.path.join(config.basepath, 'parametersPY', f'xvec{config.filter}.mat'), {'xvec': xvec})
     savemat(os.path.join(config.basepath, 'parametersPY', f'yvec{config.filter}.mat'), {'yvec': yvec})
     savemat(os.path.join(config.basepath, 'parametersPY', f'background{config.filter}.mat'), {'background': background})
@@ -249,9 +249,9 @@ def computeOffsets(config):
     end_time = time()
     end_timeP = process_time()
     
-    print("Computed offsets for", f'{len(selectedFrames)}', "frames")
+    print("Computed offsets for", f'{len(selectedFrames)}', "frames", "\n")
     print("Elapsed time:", f'{end_time - start_time:.4f}') 
-    print("Elapsed CPU time:", f'{end_timeP - start_timeP:.4f}') 
+    print("Elapsed CPU time:", f'{end_timeP - start_timeP:.4f}', "\n") 
 
     plt.figure(1)
     plt.imshow(maxQualFrame, cmap='gray', vmin = 0, vmax = 255)
@@ -335,7 +335,7 @@ def stackImages(config):
     end_timeP = process_time()
     print("\n")
     print("Elapsed time:", f'{end_time - start_time:.4f}') 
-    print("Elapsed CPU time:", f'{end_timeP - start_timeP:.4f}') 
+    print("Elapsed CPU time:", f'{end_timeP - start_timeP:.4f}', "\n") 
 
     plt.imshow(stackFrame, cmap='gray')
     plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0, hspace = 0, wspace = 0)
