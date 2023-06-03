@@ -77,7 +77,7 @@ def triangles(x, y):
 
 
 def findRT(A, B):
-    #Find optimal rotation and translation from two sets of points. Cred to https://nghiaho.com/?page_id=671
+    #Find optimal rotation and translation from two sets of points. Cred to Nghia Ho
     centroid_A = np.mean(A, axis=1).reshape(-1, 1)
     centroid_B = np.mean(B, axis=1).reshape(-1, 1)
 
@@ -267,6 +267,7 @@ def computeOffsets(config):
         R = np.array([[np.cos(th[i]), -np.sin(th[i])], [np.sin(th[i]), np.cos(th[i])]])
         t = np.array([dx[i], dy[i]])
         debugMatrix = R.dot(np.array([xvec[selectedFrames[i]].ravel(), yvec[selectedFrames[i]].ravel()])) + np.repeat(t[:, np.newaxis], len(xvec[selectedFrames[i]].ravel()), axis=1)
+        debugMatrix = debugMatrix[:,debugMatrix.min(axis=0)>=0]
         plt.scatter(debugMatrix[0, :], debugMatrix[1, :], s=60, facecolors='none', edgecolors='g')
 
     plt.show()
