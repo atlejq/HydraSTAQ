@@ -346,12 +346,14 @@ def stackImages(config):
     plt.show()
 
 
-def selection():
+def selectMethod():
    filterTuple = ("L","R","G","B","H")
    alignTuple = ("L","R","G","B","H")
+   inputTuple = (".png", ".tif")
    if todoSelector.get()==0:
         config.maxStars=s0.get()
         config.filter = filterTuple[filterSelector.get()]
+        config.inputFormat = inputTuple[inputFormatSelector.get()]
         readImages(config)  
    elif todoSelector.get()==1:
         config.discardPercentage=s1.get()
@@ -362,6 +364,7 @@ def selection():
         computeOffsets(config)
    elif todoSelector.get()==2:
         config.filter = filterTuple[filterSelector.get()]
+        config.inputFormat = inputTuple[inputFormatSelector.get()]
         config.medianOver=s4.get()
         stackImages(config)
 
@@ -381,8 +384,10 @@ config = Config()
 todoSelector = IntVar()
 filterSelector = IntVar()
 alignSelector = IntVar()
+inputFormatSelector = IntVar()
 filterSelector.set(1)
 alignSelector.set(1)
+inputFormatSelector.set(0)
 
 v0 = DoubleVar()
 v1 = DoubleVar()
@@ -395,7 +400,7 @@ pathString = StringVar()
 t0 = Radiobutton(win, text="Read images", variable=todoSelector, value=0).grid(row=0, sticky='w')
 t1 = Radiobutton(win, text="Compute offsets", variable=todoSelector, value=1).grid(row=1, sticky='w')
 t2 = Radiobutton(win, text="Stack images", variable=todoSelector, value=2).grid(row=2,  sticky='w')
-B1 = Button(win, text ="Execute", command = selection).grid(row=3)
+B1 = Button(win, text ="Execute", command = selectMethod).grid(row=3)
 label = Label(text="Make a choice").grid(row=4)
 
 Label(win, text="Max stars").grid(row=0, column=1)
@@ -424,6 +429,8 @@ a3 = Radiobutton(win, text="Align by Ha", variable=alignSelector, value=4).grid(
 
 B2 = Button(text="Select base path", command=selectPathButton).grid(row=0, column=5)
 Label(master=win,textvariable=pathString).grid(row=1, column=5)
+g0 = Radiobutton(win, text="Read PNG", variable=inputFormatSelector, value=0).grid(row=2, column=5)
+g1 = Radiobutton(win, text="Read TIF", variable=inputFormatSelector, value=1).grid(row=3, column=5)
 
 win.mainloop()
 
