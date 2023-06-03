@@ -153,54 +153,58 @@ def readImages(config):
     qual = []
 
     fileNameArray = getFilenames(config)
-    stars = []
-    background = []
-    xvec = np.empty(len(fileNameArray), dtype=object)
-    yvec = np.empty(len(fileNameArray), dtype=object)
+
+    if(len(fileNameArray)>0):
+        stars = []
+        background = []
+        xvec = np.empty(len(fileNameArray), dtype=object)
+        yvec = np.empty(len(fileNameArray), dtype=object)
     
-    for n in range(len(fileNameArray)):  
-        lightFrame = np.asarray(imread(fileNameArray[n], IMREAD_GRAYSCALE))
-        lightFrame = lightFrame[config.ROI_y[0]:config.ROI_y[1], config.ROI_x[0]:config.ROI_x[1]]
+        for n in range(len(fileNameArray)):  
+            lightFrame = np.asarray(imread(fileNameArray[n], IMREAD_GRAYSCALE))
+            lightFrame = lightFrame[config.ROI_y[0]:config.ROI_y[1], config.ROI_x[0]:config.ROI_x[1]]
 
-        background.append(np.sum(lightFrame))
+            background.append(np.sum(lightFrame))
 
-        starMatrix = analyzeStarField(lightFrame, config)
-        stars.append(len(starMatrix))
+            starMatrix = analyzeStarField(lightFrame, config)
+            stars.append(len(starMatrix))
 
-        corrMatrix = starMatrix[np.argsort(starMatrix[:, 4])][::-1]
+            corrMatrix = starMatrix[np.argsort(starMatrix[:, 4])][::-1]
 
-        corrMatrix = corrMatrix.T
+            corrMatrix = corrMatrix.T
         
-        if corrMatrix.shape[1] > config.maxStars:
-            corrMatrix = corrMatrix[:, :config.maxStars:]
+            if corrMatrix.shape[1] > config.maxStars:
+                corrMatrix = corrMatrix[:, :config.maxStars:]
    
-        xvec[n] = (corrMatrix[0,:] + corrMatrix[2,:]/2)
-        yvec[n] = (corrMatrix[1,:] + corrMatrix[3,:]/2)
+            xvec[n] = (corrMatrix[0,:] + corrMatrix[2,:]/2)
+            yvec[n] = (corrMatrix[1,:] + corrMatrix[3,:]/2)
         
-        if n % 10 == 0:
-            print("Reading", f'{len(fileNameArray)}', "frames: {}%".format(int(100*n/(len(fileNameArray)-1))), end=" ", flush=True)
-            print("\r", end='')
+            if n % 10 == 0:
+                print("Reading", f'{len(fileNameArray)}', "frames: {}%".format(int(100*n/(len(fileNameArray)-1))), end=" ", flush=True)
+                print("\r", end='')
     
-    qual = [s/max(stars) for s in stars]
-    q = qual.index(max(qual))
-    refVectorX = xvec[q]
-    refVectorY = yvec[q]
-    maxQualFramePath = fileNameArray[q]
+        qual = [s/max(stars) for s in stars]
+        q = qual.index(max(qual))
+        refVectorX = xvec[q]
+        refVectorY = yvec[q]
+        maxQualFramePath = fileNameArray[q]
 
-    end_time = time()
-    end_timeP = process_time()
-    print("\n")
-    print("Elapsed time:", f'{end_time - start_time:.4f}') 
-    print("Elapsed CPU time:", f'{end_timeP - start_timeP:.4f}', "\n") 
 
-    savemat(os.path.join(config.basepath, 'parametersPY', f'xvec{config.filter}.mat'), {'xvec': xvec})
-    savemat(os.path.join(config.basepath, 'parametersPY', f'yvec{config.filter}.mat'), {'yvec': yvec})
-    savemat(os.path.join(config.basepath, 'parametersPY', f'background{config.filter}.mat'), {'background': background})
-    savemat(os.path.join(config.basepath, 'parametersPY', f'qual{config.filter}.mat'), {'qual': qual})
-    savemat(os.path.join(config.basepath, 'parametersPY', f'maxQualFramePath{config.filter}.mat'), {'maxQualFramePath': maxQualFramePath})
-    savemat(os.path.join(config.basepath, 'parametersPY', f'refVectorX{config.filter}.mat'), {'refVectorX': refVectorX})
-    savemat(os.path.join(config.basepath, 'parametersPY', f'refVectorY{config.filter}.mat'), {'refVectorY': refVectorY})
+        end_time = time()
+        end_timeP = process_time()
+        print("\n")
+        print("Elapsed time:", f'{end_time - start_time:.4f}') 
+        print("Elapsed CPU time:", f'{end_timeP - start_timeP:.4f}', "\n") 
 
+        savemat(os.path.join(config.basepath, 'parametersPY', f'xvec{config.filter}.mat'), {'xvec': xvec})
+        savemat(os.path.join(config.basepath, 'parametersPY', f'yvec{config.filter}.mat'), {'yvec': yvec})
+        savemat(os.path.join(config.basepath, 'parametersPY', f'background{config.filter}.mat'), {'background': background})
+        savemat(os.path.join(config.basepath, 'parametersPY', f'qual{config.filter}.mat'), {'qual': qual})
+        savemat(os.path.join(config.basepath, 'parametersPY', f'maxQualFramePath{config.filter}.mat'), {'maxQualFramePath': maxQualFramePath})
+        savemat(os.path.join(config.basepath, 'parametersPY', f'refVectorX{config.filter}.mat'), {'refVectorX': refVectorX})
+        savemat(os.path.join(config.basepath, 'parametersPY', f'refVectorY{config.filter}.mat'), {'refVectorY': refVectorY})
+    else:
+        print("No image files found.")
 
 def computeOffsets(config):
     start_time = time()
@@ -294,56 +298,60 @@ def stackImages(config):
     start_time = time()
     start_timeP = process_time()
 
-    dx = loadmat(os.path.join(config.basepath, 'parametersPY', f'dx{config.filter}.mat'))['dx'].ravel()
-    dy = loadmat(os.path.join(config.basepath, 'parametersPY', f'dy{config.filter}.mat'))['dy'].ravel()
-    th = loadmat(os.path.join(config.basepath, 'parametersPY', f'th{config.filter}.mat'))['th'].ravel()
-    selectedFrames = loadmat(os.path.join(config.basepath, 'parametersPY', f'selectedFrames{config.filter}.mat'))['selectedFrames'].ravel()
-    background = loadmat(os.path.join(config.basepath, 'parametersPY', f'background{config.filter}.mat'))['background'].ravel()
-
-    darkPath = config.darkPathH if config.filter == "H" else config.darkPathRGB
-
-    darkFrame = imread(os.path.join(config.basepath, darkPath), IMREAD_GRAYSCALE)  
-    darkFrame = darkFrame[config.ROI_y[0]:config.ROI_y[1], config.ROI_x[0]:config.ROI_x[1]]
-    darkFrame = darkFrame.astype(np.float32)/(255.0**darkFrame.dtype.itemsize)
-
-    stackFrame = np.zeros(((config.ROI_y[1] - config.ROI_y[0]), (config.ROI_x[1] - config.ROI_x[0])), dtype=np.float32)
-    temparray = np.zeros(((config.ROI_y[1] - config.ROI_y[0]), (config.ROI_x[1] - config.ROI_x[0]), config.medianOver), dtype=np.float32)
-
-    tempcount = 1
     fileNameArray = getFilenames(config)    
+    
+    if(len(fileNameArray)>0):
+        dx = loadmat(os.path.join(config.basepath, 'parametersPY', f'dx{config.filter}.mat'))['dx'].ravel()
+        dy = loadmat(os.path.join(config.basepath, 'parametersPY', f'dy{config.filter}.mat'))['dy'].ravel()
+        th = loadmat(os.path.join(config.basepath, 'parametersPY', f'th{config.filter}.mat'))['th'].ravel()
+        selectedFrames = loadmat(os.path.join(config.basepath, 'parametersPY', f'selectedFrames{config.filter}.mat'))['selectedFrames'].ravel()
+        background = loadmat(os.path.join(config.basepath, 'parametersPY', f'background{config.filter}.mat'))['background'].ravel()
 
-    for i in range(len(selectedFrames)):
-        lightFrame = np.asarray(imread(fileNameArray[selectedFrames[i]],IMREAD_GRAYSCALE))
-        lightFrame = lightFrame[config.ROI_y[0]:config.ROI_y[1], config.ROI_x[0]:config.ROI_x[1]]
-        lightFrame = lightFrame.astype(np.float32)/(255**lightFrame.dtype.itemsize)
-        lightFrame *= max(background[selectedFrames])/background[selectedFrames[i]]
-        lightFrame -= darkFrame
+        darkPath = config.darkPathH if config.filter == "H" else config.darkPathRGB
+
+        darkFrame = imread(os.path.join(config.basepath, darkPath), IMREAD_GRAYSCALE)  
+        darkFrame = darkFrame[config.ROI_y[0]:config.ROI_y[1], config.ROI_x[0]:config.ROI_x[1]]
+        darkFrame = darkFrame.astype(np.float32)/(255.0**darkFrame.dtype.itemsize)
+
+        stackFrame = np.zeros(((config.ROI_y[1] - config.ROI_y[0]), (config.ROI_x[1] - config.ROI_x[0])), dtype=np.float32)
+        temparray = np.zeros(((config.ROI_y[1] - config.ROI_y[0]), (config.ROI_x[1] - config.ROI_x[0]), config.medianOver), dtype=np.float32)
+
+        tempcount = 1
+
+        for i in range(len(selectedFrames)):
+            lightFrame = np.asarray(imread(fileNameArray[selectedFrames[i]],IMREAD_GRAYSCALE))
+            lightFrame = lightFrame[config.ROI_y[0]:config.ROI_y[1], config.ROI_x[0]:config.ROI_x[1]]
+            lightFrame = lightFrame.astype(np.float32)/(255**lightFrame.dtype.itemsize)
+            lightFrame *= max(background[selectedFrames])/background[selectedFrames[i]]
+            lightFrame -= darkFrame
          
-        M = np.float32([[np.cos(th[i]), -np.sin(th[i]), dx[i]], [np.sin(th[i]), np.cos(th[i]), dy[i]]])
-        lightFrame = warpAffine(lightFrame,M,(lightFrame.shape[1], lightFrame.shape[0]))
+            M = np.float32([[np.cos(th[i]), -np.sin(th[i]), dx[i]], [np.sin(th[i]), np.cos(th[i]), dy[i]]])
+            lightFrame = warpAffine(lightFrame,M,(lightFrame.shape[1], lightFrame.shape[0]))
        
-        temparray[:, :, tempcount-1] = lightFrame[:(config.ROI_y[1] - config.ROI_y[0]), :(config.ROI_x[1] - config.ROI_x[0])]
+            temparray[:, :, tempcount-1] = lightFrame[:(config.ROI_y[1] - config.ROI_y[0]), :(config.ROI_x[1] - config.ROI_x[0])]
 
-        tempcount += 1
-        if (((i+1) % config.medianOver) == 0):
-            print("Stacking", f'{len(selectedFrames)}', "frames: {}%".format(int(100*i/(len(selectedFrames)-1))), end=" ", flush=True)
-            print("\r", end='')
-            stackFrame = stackFrame + np.median(temparray,axis=2)/(len(selectedFrames)//config.medianOver);
-            temparray = np.zeros(((config.ROI_y[1] - config.ROI_y[0]), (config.ROI_x[1] - config.ROI_x[0]), config.medianOver), dtype=np.float32)
-            tempcount = 1;
+            tempcount += 1
+            if (((i+1) % config.medianOver) == 0):
+                print("Stacking", f'{len(selectedFrames)}', "frames: {}%".format(int(100*i/(len(selectedFrames)-1))), end=" ", flush=True)
+                print("\r", end='')
+                stackFrame = stackFrame + np.median(temparray,axis=2)/(len(selectedFrames)//config.medianOver);
+                temparray = np.zeros(((config.ROI_y[1] - config.ROI_y[0]), (config.ROI_x[1] - config.ROI_x[0]), config.medianOver), dtype=np.float32)
+                tempcount = 1;
 
-    end_time = time()
-    end_timeP = process_time()
-    print("\n")
-    print("Elapsed time:", f'{end_time - start_time:.4f}') 
-    print("Elapsed CPU time:", f'{end_timeP - start_timeP:.4f}', "\n") 
+        end_time = time()
+        end_timeP = process_time()
+        print("\n")
+        print("Elapsed time:", f'{end_time - start_time:.4f}') 
+        print("Elapsed CPU time:", f'{end_timeP - start_timeP:.4f}', "\n") 
 
-    imwrite(os.path.join(config.basepath, 'outPY', f'{len(selectedFrames)}_{config.filter}.tif'), stackFrame)
+        imwrite(os.path.join(config.basepath, 'outPY', f'{len(selectedFrames)}_{config.filter}.tif'), stackFrame)
 
-    plt.imshow(stackFrame, cmap='gray')
-    plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0, hspace = 0, wspace = 0)
-    plt.axis('off')
-    plt.show()
+        plt.imshow(stackFrame, cmap='gray')
+        plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0, hspace = 0, wspace = 0)
+        plt.axis('off')
+        plt.show()
+    else:
+        print("No image files found.")
 
 
 def selectMethod():
@@ -429,8 +437,8 @@ a3 = Radiobutton(win, text="Align by Ha", variable=alignSelector, value=4).grid(
 
 B2 = Button(text="Select base path", command=selectPathButton).grid(row=0, column=5)
 Label(master=win,textvariable=pathString).grid(row=1, column=5)
-g0 = Radiobutton(win, text="Read PNG", variable=inputFormatSelector, value=0).grid(row=2, column=5)
-g1 = Radiobutton(win, text="Read TIF", variable=inputFormatSelector, value=1).grid(row=3, column=5)
+g0 = Radiobutton(win, text="Read PNG", variable=inputFormatSelector, value=0).grid(row=2, column=5, sticky='w')
+g1 = Radiobutton(win, text="Read TIF", variable=inputFormatSelector, value=1).grid(row=3, column=5, sticky='w')
 
 win.mainloop()
 
