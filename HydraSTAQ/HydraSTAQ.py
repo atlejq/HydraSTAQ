@@ -14,7 +14,8 @@ class Config:
     # Configuration class to hold and manage all the configuration parameters.   
     def __init__(self):
         self.basepath = 'C:/F/astro/matlab/m1test/'
-        self.parameterpath = self.basepath + 'parametersPY'
+        self.parameterpath = self.basepath + 'parametersPy'
+        self.outputpath = self.basepath + 'outPy'
         self.darkPathRGB = 'darks/darkframe10.tif'
         self.darkPathH = 'darks/darkframe20.tif'
         self.inputFormat = str
@@ -159,8 +160,6 @@ def readImages(config):
         background = []
         xvec = np.empty(len(fileNameArray), dtype=object)
         yvec = np.empty(len(fileNameArray), dtype=object)
-
-        if not os.path.isdir(config.parameterpath): os.makedirs(config.parameterpath)           
     
         for n in range(len(fileNameArray)):  
             lightFrame = np.asarray(imread(fileNameArray[n], IMREAD_GRAYSCALE))
@@ -364,8 +363,7 @@ def stackImages(config):
         print("Elapsed time:", f'{end_time - start_time:.4f}') 
         print("Elapsed CPU time:", f'{end_timeP - start_timeP:.4f}', "\n") 
 
-        if not os.path.isdir(os.path.join(config.basepath, 'outPY')): os.makedirs(os.path.join(config.basepath, 'outPY'))           
-        imwrite(os.path.join(config.basepath, 'outPY', f'{len(selectedFrames)}_{config.filter}.tif'), stackFrame)
+        imwrite(os.path.join(config.outputpath, f'{len(selectedFrames)}_{config.filter}.tif'), stackFrame)
 
         plt.imshow(stackFrame, cmap='gray')
         plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0, hspace = 0, wspace = 0)
@@ -376,6 +374,9 @@ def stackImages(config):
 
 
 def selectMethod():
+   if not os.path.isdir(config.parameterpath): os.makedirs(config.parameterpath)           
+   if not os.path.isdir(os.path.join(config.outputpath)): os.makedirs(os.path.join(config.outputpath))  
+
    filterTuple = ("L","R","G","B","H")
    alignTuple = ("L","R","G","B","H")
    inputTuple = (".png", ".tif")
