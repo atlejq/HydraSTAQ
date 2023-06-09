@@ -1,4 +1,3 @@
-from genericpath import isfile
 import os
 import numpy as np
 from cv2 import medianBlur, imread, imwrite, warpAffine, IMREAD_GRAYSCALE
