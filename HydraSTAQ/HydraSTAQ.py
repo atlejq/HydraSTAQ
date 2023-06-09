@@ -14,7 +14,7 @@ class Config:
     # Configuration class to hold and manage all the configuration parameters.   
     def __init__(self):
         self.basepath = 'C:/F/astro/matlab/m1test/'
-        self.parameterDir = 'parametersPY'
+        self.parameterpath = self.basepath + 'parametersPY'
         self.darkPathRGB = 'darks/darkframe10.tif'
         self.darkPathH = 'darks/darkframe20.tif'
         self.inputFormat = str
@@ -160,8 +160,7 @@ def readImages(config):
         xvec = np.empty(len(fileNameArray), dtype=object)
         yvec = np.empty(len(fileNameArray), dtype=object)
 
-        if not os.path.isdir(os.path.join(config.basepath, config.parameterDir)):
-            os.makedirs(os.path.join(config.basepath, config.parameterDir))
+        if not os.path.isdir(config.parameterpath): os.makedirs(config.parameterpath)           
     
         for n in range(len(fileNameArray)):  
             lightFrame = np.asarray(imread(fileNameArray[n], IMREAD_GRAYSCALE))
@@ -200,11 +199,11 @@ def readImages(config):
         print("Elapsed time:", f'{end_time - start_time:.4f}') 
         print("Elapsed CPU time:", f'{end_timeP - start_timeP:.4f}', "\n") 
 
-        savemat(os.path.join(config.basepath, config.parameterDir, f'xvec{config.filter}.mat'), {'xvec': xvec})
-        savemat(os.path.join(config.basepath, config.parameterDir, f'yvec{config.filter}.mat'), {'yvec': yvec})
-        savemat(os.path.join(config.basepath, config.parameterDir, f'qualVector{config.filter}.mat'), {'qualVector': qualVector})
-        savemat(os.path.join(config.basepath, config.parameterDir, f'maxQualFramePath{config.filter}.mat'), {'maxQualFramePath': maxQualFramePath})
-        savemat(os.path.join(config.basepath, config.parameterDir, f'refVector{config.filter}.mat'), {'refVector': refVector})
+        savemat(os.path.join(config.parameterpath, f'xvec{config.filter}.mat'), {'xvec': xvec})
+        savemat(os.path.join(config.parameterpath, f'yvec{config.filter}.mat'), {'yvec': yvec})
+        savemat(os.path.join(config.parameterpath, f'qualVector{config.filter}.mat'), {'qualVector': qualVector})
+        savemat(os.path.join(config.parameterpath, f'maxQualFramePath{config.filter}.mat'), {'maxQualFramePath': maxQualFramePath})
+        savemat(os.path.join(config.parameterpath, f'refVector{config.filter}.mat'), {'refVector': refVector})
     else:
         print("No image files found.")
 
@@ -212,12 +211,12 @@ def computeOffsets(config):
     start_time = time()
     start_timeP = process_time()
 
-    xvecPath = os.path.join(config.basepath, config.parameterDir, f'xvec{config.filter}.mat')
-    yvecPath = os.path.join(config.basepath, config.parameterDir, f'yvec{config.filter}.mat')
-    qualVectorPath = os.path.join(config.basepath, config.parameterDir, f'qualVector{config.filter}.mat')
-    maxQualFramePath = os.path.join(config.basepath, config.parameterDir, f'maxQualFramePath{config.filter}.mat')
-    refVector = os.path.join(config.basepath, config.parameterDir, f'refVector{config.filter}.mat')
-    refVectorAlign = os.path.join(config.basepath, config.parameterDir, f'refVector{config.align}.mat')
+    xvecPath = os.path.join(config.parameterpath, f'xvec{config.filter}.mat')
+    yvecPath = os.path.join(config.parameterpath, f'yvec{config.filter}.mat')
+    qualVectorPath = os.path.join(config.parameterpath, f'qualVector{config.filter}.mat')
+    maxQualFramePath = os.path.join(config.parameterpath, f'maxQualFramePath{config.filter}.mat')
+    refVector = os.path.join(config.parameterpath, f'refVector{config.filter}.mat')
+    refVectorAlign = os.path.join(config.parameterpath, f'refVector{config.align}.mat')
 
     if(all([os.path.isfile(f) for f in [xvecPath, yvecPath, qualVectorPath, maxQualFramePath, refVector, refVectorAlign]])):  
         xvec = loadmat(xvecPath)['xvec'].ravel()
@@ -305,7 +304,7 @@ def computeOffsets(config):
         #plt.show() 
 
         offsets = np.array([dx, dy, th, selectedFrames]).T
-        savemat(os.path.join(config.basepath, config.parameterDir, f'offsets{config.filter}.mat'), {'offsets': offsets})
+        savemat(os.path.join(config.parameterpath,  f'offsets{config.filter}.mat'), {'offsets': offsets})
     else:
         print("Missing input files.", "\n")
 
@@ -315,8 +314,8 @@ def stackImages(config):
     start_timeP = process_time()
 
     fileNameArray = getFilenames(config)    
-    offsetsPath = os.path.join(config.basepath, config.parameterDir, f'offsets{config.filter}.mat')
-    qualVectorPath = os.path.join(config.basepath, config.parameterDir, f'qualVector{config.filter}.mat')
+    offsetsPath = os.path.join(config.parameterpath, f'offsets{config.filter}.mat')
+    qualVectorPath = os.path.join(config.parameterpath, f'qualVector{config.filter}.mat')
 
     if(len(fileNameArray)>0 and all([os.path.isfile(f) for f in [offsetsPath, qualVectorPath]])):
         offsets = loadmat(offsetsPath)['offsets']
