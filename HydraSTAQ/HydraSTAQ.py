@@ -187,7 +187,7 @@ def readImages(config):
         qual = [s/max(stars) for s in stars]
         q = qual.index(max(qual))
 
-        qualVector = np.array([qual, background])
+        qualVector = np.array([qual, background]).T
         refVector = np.array([xvec[q], yvec[q]])
 
         maxQualFramePath = fileNameArray[q]
@@ -217,8 +217,8 @@ def computeOffsets(config):
     refVector = loadmat(os.path.join(config.basepath, config.parameterDir, f'refVector{config.filter}.mat'))['refVector']
     refVectorAlign = loadmat(os.path.join(config.basepath, config.parameterDir, f'refVector{config.align}.mat'))['refVector']
 
-    qual = qualVector[0,:]
-    background = qualVector[1,:]
+    qual = qualVector[:,0].T
+    background = qualVector[:,1].T
     refVectorX = refVector[0,:]
     refVectorY = refVector[1,:]
     refVectorXAlign = refVectorAlign[0,:]
@@ -312,8 +312,7 @@ def stackImages(config):
         dy = offsets[:,1].T
         th = offsets[:,2].T
         selectedFrames = offsets[:,3].T.astype(int)
-        background = qualVector[1,:]
-
+        background = qualVector[:,1].T
 
         darkPath = config.darkPathH if config.filter == "H" else config.darkPathRGB
 
