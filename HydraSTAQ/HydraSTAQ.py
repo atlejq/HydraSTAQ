@@ -151,7 +151,6 @@ def readImages(config):
 
     xvec = []
     yvec = []
-    qual = []
 
     fileNameArray = getFilenames(config)
 
@@ -160,6 +159,9 @@ def readImages(config):
         background = []
         xvec = np.empty(len(fileNameArray), dtype=object)
         yvec = np.empty(len(fileNameArray), dtype=object)
+
+        if not os.path.isdir(os.path.join(config.basepath, config.parameterDir)):
+            os.makedirs(os.path.join(config.basepath, config.parameterDir))
     
         for n in range(len(fileNameArray)):  
             lightFrame = np.asarray(imread(fileNameArray[n], IMREAD_GRAYSCALE))
@@ -305,7 +307,7 @@ def computeOffsets(config):
         offsets = np.array([dx, dy, th, selectedFrames]).T
         savemat(os.path.join(config.basepath, config.parameterDir, f'offsets{config.filter}.mat'), {'offsets': offsets})
     else:
-        print("Missing input files.")
+        print("Missing input files.", "\n")
 
 
 def stackImages(config):  
@@ -370,7 +372,7 @@ def stackImages(config):
         plt.axis('off')
         plt.show()
     else:
-        print("Missing input files.")
+        print("Missing input files.", "\n")
 
 
 def selectMethod():
