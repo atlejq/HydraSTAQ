@@ -14,6 +14,7 @@ class Config:
     # Configuration class to hold and manage all the configuration parameters.   
     def __init__(self):
         self.basepath = 'C:/F/astro/matlab/m1test/'
+        self.parameterDir = 'parametersPY'
         self.darkPathRGB = 'darks/darkframe10.tif'
         self.darkPathH = 'darks/darkframe20.tif'
         self.inputFormat = str
@@ -185,8 +186,10 @@ def readImages(config):
     
         qual = [s/max(stars) for s in stars]
         q = qual.index(max(qual))
-        refVectorX = xvec[q]
-        refVectorY = yvec[q]
+
+        qualVector = np.array([qual, background])
+        refVector = np.array([xvec[q], yvec[q]])
+
         maxQualFramePath = fileNameArray[q]
 
         end_time = time()
@@ -195,13 +198,11 @@ def readImages(config):
         print("Elapsed time:", f'{end_time - start_time:.4f}') 
         print("Elapsed CPU time:", f'{end_timeP - start_timeP:.4f}', "\n") 
 
-        savemat(os.path.join(config.basepath, 'parametersPY', f'xvec{config.filter}.mat'), {'xvec': xvec})
-        savemat(os.path.join(config.basepath, 'parametersPY', f'yvec{config.filter}.mat'), {'yvec': yvec})
-        savemat(os.path.join(config.basepath, 'parametersPY', f'background{config.filter}.mat'), {'background': background})
-        savemat(os.path.join(config.basepath, 'parametersPY', f'qual{config.filter}.mat'), {'qual': qual})
-        savemat(os.path.join(config.basepath, 'parametersPY', f'maxQualFramePath{config.filter}.mat'), {'maxQualFramePath': maxQualFramePath})
-        savemat(os.path.join(config.basepath, 'parametersPY', f'refVectorX{config.filter}.mat'), {'refVectorX': refVectorX})
-        savemat(os.path.join(config.basepath, 'parametersPY', f'refVectorY{config.filter}.mat'), {'refVectorY': refVectorY})
+        savemat(os.path.join(config.basepath, config.parameterDir, f'xvec{config.filter}.mat'), {'xvec': xvec})
+        savemat(os.path.join(config.basepath, config.parameterDir, f'yvec{config.filter}.mat'), {'yvec': yvec})
+        savemat(os.path.join(config.basepath, config.parameterDir, f'qualVector{config.filter}.mat'), {'qualVector': qualVector})
+        savemat(os.path.join(config.basepath, config.parameterDir, f'maxQualFramePath{config.filter}.mat'), {'maxQualFramePath': maxQualFramePath})
+        savemat(os.path.join(config.basepath, config.parameterDir, f'refVector{config.filter}.mat'), {'refVector': refVector})
     else:
         print("No image files found.")
 
@@ -209,14 +210,19 @@ def computeOffsets(config):
     start_time = time()
     start_timeP = process_time()
 
-    xvec = loadmat(os.path.join(config.basepath, 'parametersPY', f'xvec{config.filter}.mat'))['xvec'].ravel()
-    yvec = loadmat(os.path.join(config.basepath, 'parametersPY', f'yvec{config.filter}.mat'))['yvec'].ravel()
-    qual = loadmat(os.path.join(config.basepath, 'parametersPY', f'qual{config.filter}.mat'))['qual'].ravel()
-    maxQualFramePath = loadmat(os.path.join(config.basepath, 'parametersPY', f'maxQualFramePath{config.filter}.mat'))['maxQualFramePath'].ravel()
-    refVectorX = loadmat(os.path.join(config.basepath, 'parametersPY', f'refVectorX{config.filter}.mat'))['refVectorX'].ravel()
-    refVectorY = loadmat(os.path.join(config.basepath, 'parametersPY', f'refVectorY{config.filter}.mat'))['refVectorY'].ravel()
-    refVectorXAlign = loadmat(os.path.join(config.basepath, 'parametersPY', f'refVectorX{config.align}.mat'))['refVectorX'].ravel()
-    refVectorYAlign = loadmat(os.path.join(config.basepath, 'parametersPY', f'refVectorY{config.align}.mat'))['refVectorY'].ravel()
+    xvec = loadmat(os.path.join(config.basepath, config.parameterDir, f'xvec{config.filter}.mat'))['xvec'].ravel()
+    yvec = loadmat(os.path.join(config.basepath, config.parameterDir, f'yvec{config.filter}.mat'))['yvec'].ravel()
+    qualVector = loadmat(os.path.join(config.basepath, config.parameterDir, f'qualVector{config.filter}.mat'))['qualVector']
+    maxQualFramePath = loadmat(os.path.join(config.basepath, config.parameterDir, f'maxQualFramePath{config.filter}.mat'))['maxQualFramePath'].ravel()
+    refVector = loadmat(os.path.join(config.basepath, config.parameterDir, f'refVector{config.filter}.mat'))['refVector']
+    refVectorAlign = loadmat(os.path.join(config.basepath, config.parameterDir, f'refVector{config.align}.mat'))['refVector']
+
+    qual = qualVector[0,:]
+    background = qualVector[1,:]
+    refVectorX = refVector[0,:]
+    refVectorY = refVector[1,:]
+    refVectorXAlign = refVectorAlign[0,:]
+    refVectorYAlign = refVectorAlign[1,:] 
 
     qt = scoreatpercentile(qual, config.discardPercentage)
 
@@ -276,11 +282,11 @@ def computeOffsets(config):
     #plt.plot(th)
     #plt.show()
 
-    #plt.figure(2)
-    #plt.plot(qual)
-    #plt.plot(background/np.max(background))
-    #plt.legend(['Quality', 'Background'])
-    #plt.show()
+    plt.figure(2)
+    plt.plot(qual)
+    plt.plot(background/np.max(background))
+    plt.legend(['Quality', 'Background'])
+    plt.show()
     
     #plt.figure(3)
     #plt.plot(qual[selectedFrames])
@@ -289,7 +295,7 @@ def computeOffsets(config):
     #plt.show() 
 
     offsets = np.array([dx, dy, th, selectedFrames]).T
-    savemat(os.path.join(config.basepath, 'parametersPY', f'offsets{config.filter}.mat'), {'offsets': offsets})
+    savemat(os.path.join(config.basepath, config.parameterDir, f'offsets{config.filter}.mat'), {'offsets': offsets})
 
 
 def stackImages(config):  
@@ -299,17 +305,15 @@ def stackImages(config):
     fileNameArray = getFilenames(config)    
     
     if(len(fileNameArray)>0):
-
-        offsets = loadmat(os.path.join(config.basepath, 'parametersPY', f'offsets{config.filter}.mat'))['offsets']
-        background = loadmat(os.path.join(config.basepath, 'parametersPY', f'background{config.filter}.mat'))['background'].ravel()
+        offsets = loadmat(os.path.join(config.basepath, config.parameterDir, f'offsets{config.filter}.mat'))['offsets']
+        qualVector = loadmat(os.path.join(config.basepath, config.parameterDir, f'qualVector{config.filter}.mat'))['qualVector']
 
         dx = offsets[:,0].T
         dy = offsets[:,1].T
         th = offsets[:,2].T
         selectedFrames = offsets[:,3].T.astype(int)
+        background = qualVector[1,:]
 
-        print(dx)
-        print(selectedFrames)
 
         darkPath = config.darkPathH if config.filter == "H" else config.darkPathRGB
 
