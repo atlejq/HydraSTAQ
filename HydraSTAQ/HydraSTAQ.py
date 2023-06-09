@@ -364,6 +364,7 @@ def stackImages(config):
         print("Elapsed time:", f'{end_time - start_time:.4f}') 
         print("Elapsed CPU time:", f'{end_timeP - start_timeP:.4f}', "\n") 
 
+        if not os.path.isdir(os.path.join(config.basepath, 'outPY')): os.makedirs(os.path.join(config.basepath, 'outPY'))           
         imwrite(os.path.join(config.basepath, 'outPY', f'{len(selectedFrames)}_{config.filter}.tif'), stackFrame)
 
         plt.imshow(stackFrame, cmap='gray')
