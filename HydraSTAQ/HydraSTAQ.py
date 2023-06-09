@@ -218,9 +218,7 @@ def computeOffsets(config):
     refVector = os.path.join(config.basepath, config.parameterDir, f'refVector{config.filter}.mat')
     refVectorAlign = os.path.join(config.basepath, config.parameterDir, f'refVector{config.align}.mat')
 
-    b = all([os.path.isfile(f) for f in [xvecPath, yvecPath, qualVectorPath, maxQualFramePath, refVector, refVectorAlign]])
-
-    if(b):  
+    if(all([os.path.isfile(f) for f in [xvecPath, yvecPath, qualVectorPath, maxQualFramePath, refVector, refVectorAlign]])):  
         xvec = loadmat(xvecPath)['xvec'].ravel()
         yvec = loadmat(yvecPath)['yvec'].ravel()
         qualVector = loadmat(qualVectorPath)['qualVector']
@@ -315,16 +313,13 @@ def stackImages(config):
     start_time = time()
     start_timeP = process_time()
 
-    fileNameArray = getFilenames(config) 
-    
-    offsets = os.path.join(config.basepath, config.parameterDir, f'offsets{config.filter}.mat')
-    qualVector = os.path.join(config.basepath, config.parameterDir, f'qualVector{config.filter}.mat')
+    fileNameArray = getFilenames(config)    
+    offsetsPath = os.path.join(config.basepath, config.parameterDir, f'offsets{config.filter}.mat')
+    qualVectorPath = os.path.join(config.basepath, config.parameterDir, f'qualVector{config.filter}.mat')
 
-    b = all([os.path.isfile(f) for f in [offsets, qualVector]])
-
-    if(len(fileNameArray)>0 and b):
-        offsets = loadmat(os.path.join(config.basepath, config.parameterDir, f'offsets{config.filter}.mat'))['offsets']
-        qualVector = loadmat(os.path.join(config.basepath, config.parameterDir, f'qualVector{config.filter}.mat'))['qualVector']
+    if(len(fileNameArray)>0 and all([os.path.isfile(f) for f in [offsetsPath, qualVectorPath]])):
+        offsets = loadmat(offsetsPath)['offsets']
+        qualVector = loadmat(qualVectorPath)['qualVector']
 
         dx = offsets[:,0].T
         dy = offsets[:,1].T
