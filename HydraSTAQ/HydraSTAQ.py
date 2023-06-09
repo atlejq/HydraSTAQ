@@ -1,3 +1,4 @@
+from genericpath import isfile
 import os
 import numpy as np
 from cv2 import medianBlur, imread, imwrite, warpAffine, IMREAD_GRAYSCALE
@@ -210,101 +211,118 @@ def computeOffsets(config):
     start_time = time()
     start_timeP = process_time()
 
-    xvec = loadmat(os.path.join(config.basepath, config.parameterDir, f'xvec{config.filter}.mat'))['xvec'].ravel()
-    yvec = loadmat(os.path.join(config.basepath, config.parameterDir, f'yvec{config.filter}.mat'))['yvec'].ravel()
-    qualVector = loadmat(os.path.join(config.basepath, config.parameterDir, f'qualVector{config.filter}.mat'))['qualVector']
-    maxQualFramePath = loadmat(os.path.join(config.basepath, config.parameterDir, f'maxQualFramePath{config.filter}.mat'))['maxQualFramePath'].ravel()
-    refVector = loadmat(os.path.join(config.basepath, config.parameterDir, f'refVector{config.filter}.mat'))['refVector']
-    refVectorAlign = loadmat(os.path.join(config.basepath, config.parameterDir, f'refVector{config.align}.mat'))['refVector']
+    xvecPath = os.path.join(config.basepath, config.parameterDir, f'xvec{config.filter}.mat')
+    yvecPath = os.path.join(config.basepath, config.parameterDir, f'yvec{config.filter}.mat')
+    qualVectorPath = os.path.join(config.basepath, config.parameterDir, f'qualVector{config.filter}.mat')
+    maxQualFramePath = os.path.join(config.basepath, config.parameterDir, f'maxQualFramePath{config.filter}.mat')
+    refVector = os.path.join(config.basepath, config.parameterDir, f'refVector{config.filter}.mat')
+    refVectorAlign = os.path.join(config.basepath, config.parameterDir, f'refVector{config.align}.mat')
 
-    qual = qualVector[:,0].T
-    background = qualVector[:,1].T
-    refVectorX = refVector[0,:]
-    refVectorY = refVector[1,:]
-    refVectorXAlign = refVectorAlign[0,:]
-    refVectorYAlign = refVectorAlign[1,:] 
+    b = all([os.path.isfile(f) for f in [xvecPath, yvecPath, qualVectorPath, maxQualFramePath, refVector, refVectorAlign]])
 
-    qt = scoreatpercentile(qual, config.discardPercentage)
+    if(b):  
+        xvec = loadmat(xvecPath)['xvec'].ravel()
+        yvec = loadmat(yvecPath)['yvec'].ravel()
+        qualVector = loadmat(qualVectorPath)['qualVector']
+        maxQualFramePath = loadmat(maxQualFramePath)['maxQualFramePath'].ravel()
+        refVector = loadmat(refVector)['refVector']
+        refVectorAlign = loadmat(refVectorAlign)['refVector']
 
-    selectedFrames = np.where(qt <= qual)[0]
+        qual = qualVector[:,0].T
+        background = qualVector[:,1].T
+        refVectorX = refVector[0,:]
+        refVectorY = refVector[1,:]
+        refVectorXAlign = refVectorAlign[0,:]
+        refVectorYAlign = refVectorAlign[1,:] 
 
-    dx = np.zeros(len(selectedFrames))
-    dy = np.zeros(len(selectedFrames))
-    th = np.zeros(len(selectedFrames))
-    discardFrames = np.zeros(len(selectedFrames), dtype=np.uint32)
-
-    refTriangles = triangles(refVectorX, refVectorY)
-    refTrianglesAlign = triangles(refVectorXAlign, refVectorYAlign)
-
-    refTriangles = refTriangles[np.argsort(refTriangles[:, 3])]
-    refTrianglesAlign = refTrianglesAlign[np.argsort(refTrianglesAlign[:, 3])]
-
-    mth, mt, bla = alignFrames(refVectorXAlign, refVectorYAlign, refTrianglesAlign, config.topMatchesMasterAlign, refVectorX, refVectorY)
-    for i in range(len(selectedFrames)):
-        theta, t, d = alignFrames(refVectorX, refVectorY, refTriangles, config.topMatchesMonoAlign, xvec[selectedFrames[i]].ravel(), yvec[selectedFrames[i]].ravel())
-        tmp = np.array([[np.cos(mth), -np.sin(mth)], [np.sin(mth), np.cos(mth)]]).dot(np.array([t[0], t[1]])) + np.array([mt[0], mt[1]])
-        dx[i] = tmp[0]
-        dy[i] = tmp[1]
-        th[i] = theta + mth
-        discardFrames[i] = d
-
-    dx = dx[discardFrames == 0]
-    dy = dy[discardFrames == 0]
-    th = th[discardFrames == 0]
-    selectedFrames = selectedFrames[discardFrames == 0]
-
-    maxQualFrame = np.asarray(imread(maxQualFramePath[0], IMREAD_GRAYSCALE))
-    maxQualFrame = maxQualFrame[config.ROI_y[0]:config.ROI_y[1], config.ROI_x[0]:config.ROI_x[1]]
-
-    end_time = time()
-    end_timeP = process_time()
+        qt = scoreatpercentile(qual, config.discardPercentage)
     
-    print("Computed offsets for", f'{len(selectedFrames)}', "frames", "\n")
-    print("Elapsed time:", f'{end_time - start_time:.4f}') 
-    print("Elapsed CPU time:", f'{end_timeP - start_timeP:.4f}', "\n") 
+        selectedFrames = np.where(qt <= qual)[0]
 
-    plt.figure(1)
-    plt.imshow(maxQualFrame, cmap='gray', vmin = 0, vmax = (255**maxQualFrame.dtype.itemsize))
-    plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0, hspace = 0, wspace = 0)
-    plt.axis('off')
-    plt.scatter(refVectorXAlign, refVectorYAlign, s=100, facecolors='none', edgecolors='r')
+        dx = np.zeros(len(selectedFrames))
+        dy = np.zeros(len(selectedFrames))
+        th = np.zeros(len(selectedFrames))
+        discardFrames = np.zeros(len(selectedFrames), dtype=np.uint32)
 
-    for i in range(1,len(selectedFrames)):
-        R = np.array([[np.cos(th[i]), -np.sin(th[i])], [np.sin(th[i]), np.cos(th[i])]])
-        t = np.array([dx[i], dy[i]])
-        debugMatrix = R.dot(np.array([xvec[selectedFrames[i]].ravel(), yvec[selectedFrames[i]].ravel()])) + np.repeat(t[:, np.newaxis], len(xvec[selectedFrames[i]].ravel()), axis=1)
-        debugMatrix = debugMatrix[:,debugMatrix.min(axis=0)>=0]
-        plt.scatter(debugMatrix[0, :], debugMatrix[1, :], s=60, facecolors='none', edgecolors='g')
+        refTriangles = triangles(refVectorX, refVectorY)
+        refTrianglesAlign = triangles(refVectorXAlign, refVectorYAlign)
 
-    plt.show()
+        refTriangles = refTriangles[np.argsort(refTriangles[:, 3])]
+        refTrianglesAlign = refTrianglesAlign[np.argsort(refTrianglesAlign[:, 3])]
 
-    #plt.figure(5)
-    #plt.plot(th)
-    #plt.show()
+        mth, mt, bla = alignFrames(refVectorXAlign, refVectorYAlign, refTrianglesAlign, config.topMatchesMasterAlign, refVectorX, refVectorY)
+        for i in range(len(selectedFrames)):
+            theta, t, d = alignFrames(refVectorX, refVectorY, refTriangles, config.topMatchesMonoAlign, xvec[selectedFrames[i]].ravel(), yvec[selectedFrames[i]].ravel())
+            tmp = np.array([[np.cos(mth), -np.sin(mth)], [np.sin(mth), np.cos(mth)]]).dot(np.array([t[0], t[1]])) + np.array([mt[0], mt[1]])
+            dx[i] = tmp[0]
+            dy[i] = tmp[1]
+            th[i] = theta + mth
+            discardFrames[i] = d
 
-    plt.figure(2)
-    plt.plot(qual)
-    plt.plot(background/np.max(background))
-    plt.legend(['Quality', 'Background'])
-    plt.show()
+        dx = dx[discardFrames == 0]
+        dy = dy[discardFrames == 0]
+        th = th[discardFrames == 0]
+        selectedFrames = selectedFrames[discardFrames == 0]
+
+        maxQualFrame = np.asarray(imread(maxQualFramePath[0], IMREAD_GRAYSCALE))
+        maxQualFrame = maxQualFrame[config.ROI_y[0]:config.ROI_y[1], config.ROI_x[0]:config.ROI_x[1]]
+
+        end_time = time()
+        end_timeP = process_time()
     
-    #plt.figure(3)
-    #plt.plot(qual[selectedFrames])
-    #plt.plot(background[selectedFrames]/np.max(background[selectedFrames]))
-    #plt.legend(['Quality', 'Background'])
-    #plt.show() 
+        print("Computed offsets for", f'{len(selectedFrames)}', "frames", "\n")
+        print("Elapsed time:", f'{end_time - start_time:.4f}') 
+        print("Elapsed CPU time:", f'{end_timeP - start_timeP:.4f}', "\n") 
 
-    offsets = np.array([dx, dy, th, selectedFrames]).T
-    savemat(os.path.join(config.basepath, config.parameterDir, f'offsets{config.filter}.mat'), {'offsets': offsets})
+        plt.figure(1)
+        plt.imshow(maxQualFrame, cmap='gray', vmin = 0, vmax = (255**maxQualFrame.dtype.itemsize))
+        plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0, hspace = 0, wspace = 0)
+        plt.axis('off')
+        plt.scatter(refVectorXAlign, refVectorYAlign, s=100, facecolors='none', edgecolors='r')
+
+        for i in range(1,len(selectedFrames)):
+            R = np.array([[np.cos(th[i]), -np.sin(th[i])], [np.sin(th[i]), np.cos(th[i])]])
+            t = np.array([dx[i], dy[i]])
+            debugMatrix = R.dot(np.array([xvec[selectedFrames[i]].ravel(), yvec[selectedFrames[i]].ravel()])) + np.repeat(t[:, np.newaxis], len(xvec[selectedFrames[i]].ravel()), axis=1)
+            debugMatrix = debugMatrix[:,debugMatrix.min(axis=0)>=0]
+            plt.scatter(debugMatrix[0, :], debugMatrix[1, :], s=60, facecolors='none', edgecolors='g')
+
+        plt.show()
+
+        #plt.figure(5)
+        #plt.plot(th)
+        #plt.show()
+
+        plt.figure(2)
+        plt.plot(qual)
+        plt.plot(background/np.max(background))
+        plt.legend(['Quality', 'Background'])
+        plt.show()
+    
+        #plt.figure(3)
+        #plt.plot(qual[selectedFrames])
+        #plt.plot(background[selectedFrames]/np.max(background[selectedFrames]))
+        #plt.legend(['Quality', 'Background'])
+        #plt.show() 
+
+        offsets = np.array([dx, dy, th, selectedFrames]).T
+        savemat(os.path.join(config.basepath, config.parameterDir, f'offsets{config.filter}.mat'), {'offsets': offsets})
+    else:
+        print("Missing input files.")
 
 
 def stackImages(config):  
     start_time = time()
     start_timeP = process_time()
 
-    fileNameArray = getFilenames(config)    
+    fileNameArray = getFilenames(config) 
     
-    if(len(fileNameArray)>0):
+    offsets = os.path.join(config.basepath, config.parameterDir, f'offsets{config.filter}.mat')
+    qualVector = os.path.join(config.basepath, config.parameterDir, f'qualVector{config.filter}.mat')
+
+    b = all([os.path.isfile(f) for f in [offsets, qualVector]])
+
+    if(len(fileNameArray)>0 and b):
         offsets = loadmat(os.path.join(config.basepath, config.parameterDir, f'offsets{config.filter}.mat'))['offsets']
         qualVector = loadmat(os.path.join(config.basepath, config.parameterDir, f'qualVector{config.filter}.mat'))['qualVector']
 
@@ -358,7 +376,7 @@ def stackImages(config):
         plt.axis('off')
         plt.show()
     else:
-        print("No image files found.")
+        print("Missing input files.")
 
 
 def selectMethod():
