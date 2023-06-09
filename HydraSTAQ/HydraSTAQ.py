@@ -13,7 +13,7 @@ from tkinter import Tk, IntVar, DoubleVar, StringVar, Scale, Radiobutton, Button
 class Config:  
     # Configuration class to hold and manage all the configuration parameters.   
     def __init__(self):
-        self.basepath = str
+        self.basepath = 'C:/F/astro/matlab/m1test/'
         self.darkPathRGB = 'darks/darkframe10.tif'
         self.darkPathH = 'darks/darkframe20.tif'
         self.inputFormat = str
@@ -288,10 +288,8 @@ def computeOffsets(config):
     #plt.legend(['Quality', 'Background'])
     #plt.show() 
 
-    savemat(os.path.join(config.basepath, 'parametersPY', f'dx{config.filter}.mat'), {'dx': dx})
-    savemat(os.path.join(config.basepath, 'parametersPY', f'dy{config.filter}.mat'), {'dy': dy})
-    savemat(os.path.join(config.basepath, 'parametersPY', f'th{config.filter}.mat'), {'th': th})
-    savemat(os.path.join(config.basepath, 'parametersPY', f'selectedFrames{config.filter}.mat'), {'selectedFrames': selectedFrames})
+    offsets = np.array([dx, dy, th, selectedFrames]).T
+    savemat(os.path.join(config.basepath, 'parametersPY', f'offsets{config.filter}.mat'), {'offsets': offsets})
 
 
 def stackImages(config):  
@@ -301,11 +299,17 @@ def stackImages(config):
     fileNameArray = getFilenames(config)    
     
     if(len(fileNameArray)>0):
-        dx = loadmat(os.path.join(config.basepath, 'parametersPY', f'dx{config.filter}.mat'))['dx'].ravel()
-        dy = loadmat(os.path.join(config.basepath, 'parametersPY', f'dy{config.filter}.mat'))['dy'].ravel()
-        th = loadmat(os.path.join(config.basepath, 'parametersPY', f'th{config.filter}.mat'))['th'].ravel()
-        selectedFrames = loadmat(os.path.join(config.basepath, 'parametersPY', f'selectedFrames{config.filter}.mat'))['selectedFrames'].ravel()
+
+        offsets = loadmat(os.path.join(config.basepath, 'parametersPY', f'offsets{config.filter}.mat'))['offsets']
         background = loadmat(os.path.join(config.basepath, 'parametersPY', f'background{config.filter}.mat'))['background'].ravel()
+
+        dx = offsets[:,0].T
+        dy = offsets[:,1].T
+        th = offsets[:,2].T
+        selectedFrames = offsets[:,3].T.astype(int)
+
+        print(dx)
+        print(selectedFrames)
 
         darkPath = config.darkPathH if config.filter == "H" else config.darkPathRGB
 
