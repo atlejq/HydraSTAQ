@@ -30,10 +30,10 @@ class Config:
         self.ROI_x =  [1, 4144]
 
 
-def getFilenames(config):   
+def getFilenames(config, frameType):   
     #Function to get all the file names in the given directory.   
     filenames = []
-    for root, dirs, files in os.walk(os.path.join(config.basepath, 'lights')):
+    for root, dirs, files in os.walk(os.path.join(config.basepath, frameType)):
         if config.filter in root:
             for file in files:
                 if file.endswith(config.inputFormat):
@@ -153,16 +153,16 @@ def readImages(config):
     xvec = []
     yvec = []
 
-    fileNameArray = getFilenames(config)
+    lightFrameArray = getFilenames(config, 'lights')
 
-    if(len(fileNameArray)>0):
+    if(len(lightFrameArray)>0):
         stars = []
         background = []
-        xvec = np.empty(len(fileNameArray), dtype=object)
-        yvec = np.empty(len(fileNameArray), dtype=object)
+        xvec = np.empty(len(lightFrameArray), dtype=object)
+        yvec = np.empty(len(lightFrameArray), dtype=object)
     
-        for n in range(len(fileNameArray)):  
-            lightFrame = np.asarray(imread(fileNameArray[n], IMREAD_GRAYSCALE))
+        for n in range(len(lightFrameArray)):  
+            lightFrame = np.asarray(imread(lightFrameArray[n], IMREAD_GRAYSCALE))
             lightFrame = lightFrame[config.ROI_y[0]:config.ROI_y[1], config.ROI_x[0]:config.ROI_x[1]]
 
             background.append(np.sum(lightFrame))
@@ -181,7 +181,7 @@ def readImages(config):
             yvec[n] = (corrMatrix[1,:] + corrMatrix[3,:]/2)
         
             if n % 10 == 0:
-                print("Reading", f'{len(fileNameArray)}', "frames: {}%".format(int(100*n/(len(fileNameArray)-1))), end=" ", flush=True)
+                print("Reading", f'{len(lightFrameArray)}', "frames: {}%".format(int(100*n/(len(lightFrameArray)-1))), end=" ", flush=True)
                 print("\r", end='')
     
         qual = [s/max(stars) for s in stars]
@@ -190,7 +190,7 @@ def readImages(config):
         qualVector = np.array([qual, background]).T
         refVector = np.array([xvec[q], yvec[q]])
 
-        maxQualFramePath = fileNameArray[q]
+        maxQualFramePath = lightFrameArray[q]
 
         end_time = time()
         end_timeP = process_time()
@@ -312,11 +312,11 @@ def stackImages(config):
     start_time = time()
     start_timeP = process_time()
 
-    fileNameArray = getFilenames(config)    
+    lightFrameArray = getFilenames(config, 'lights')    
     offsetsPath = os.path.join(config.parameterpath, f'offsets{config.filter}.mat')
     qualVectorPath = os.path.join(config.parameterpath, f'qualVector{config.filter}.mat')
 
-    if(len(fileNameArray)>0 and all([os.path.isfile(f) for f in [offsetsPath, qualVectorPath]])):
+    if(len(lightFrameArray)>0 and all([os.path.isfile(f) for f in [offsetsPath, qualVectorPath]])):
         offsets = loadmat(offsetsPath)['offsets']
         qualVector = loadmat(qualVectorPath)['qualVector']
 
@@ -338,7 +338,7 @@ def stackImages(config):
         tempcount = 1
 
         for i in range(len(selectedFrames)):
-            lightFrame = np.asarray(imread(fileNameArray[selectedFrames[i]],IMREAD_GRAYSCALE))
+            lightFrame = np.asarray(imread(lightFrameArray[selectedFrames[i]],IMREAD_GRAYSCALE))
             lightFrame = lightFrame[config.ROI_y[0]:config.ROI_y[1], config.ROI_x[0]:config.ROI_x[1]]
             lightFrame = lightFrame.astype(np.float32)/(255**lightFrame.dtype.itemsize)
             lightFrame *= max(background[selectedFrames])/background[selectedFrames[i]]
