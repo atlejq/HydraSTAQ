@@ -16,9 +16,9 @@ class Config:
         self.basepath = 'C:/F/astro/matlab/m1test/'
         self.parameterpath = self.basepath + 'parametersPy'
         self.outputpath = self.basepath + 'outPy'
-        self.darkPathRGB = 'darks/darkframe10.tif'
-        self.darkPathH = 'darks/darkframe20.tif'
-        self.inputFormat = str
+        self.darkPathRGB = 'darks/10minus'
+        self.darkPathH = 'darks/20minus'
+        self.lightInputFormat = str
         self.filter = str
         self.align = str
         self.maxStars = int
@@ -30,14 +30,24 @@ class Config:
         self.ROI_x =  [1, 4144]
 
 
-def getFilenames(config, frameType):   
+def getLights(config, frameType, fileFormat):   
     #Function to get all the file names in the given directory.   
     filenames = []
     for root, dirs, files in os.walk(os.path.join(config.basepath, frameType)):
         if config.filter in root:
             for file in files:
-                if file.endswith(config.inputFormat):
+                if file.endswith(fileFormat):
                     filenames.append(os.path.join(root, file))
+  
+    return filenames
+
+def getDarks(config, frameType, fileFormat):   
+    #Function to get all the file names in the given directory.   
+    filenames = []
+    for root, dirs, files in os.walk(os.path.join(config.basepath, frameType)):
+        for file in files:
+            if file.endswith(fileFormat):
+                filenames.append(os.path.join(root, file))
   
     return filenames
 
@@ -153,7 +163,7 @@ def readImages(config):
     xvec = []
     yvec = []
 
-    lightFrameArray = getFilenames(config, 'lights')
+    lightFrameArray = getLights(config, 'lights', config.lightInputFormat)
 
     if(len(lightFrameArray)>0):
         stars = []
@@ -181,7 +191,7 @@ def readImages(config):
             yvec[n] = (corrMatrix[1,:] + corrMatrix[3,:]/2)
         
             if n % 10 == 0:
-                print("Reading", f'{len(lightFrameArray)}', "frames: {}%".format(int(100*n/(len(lightFrameArray)-1))), end=" ", flush=True)
+                print("Reading", f'{len(lightFrameArray)}', "lights: {}%".format(int(100*n/(len(lightFrameArray)-1))), end=" ", flush=True)
                 print("\r", end='')
     
         qual = [s/max(stars) for s in stars]
@@ -312,7 +322,7 @@ def stackImages(config):
     start_time = time()
     start_timeP = process_time()
 
-    lightFrameArray = getFilenames(config, 'lights')    
+    lightFrameArray = getLights(config, 'lights', config.lightInputFormat)    
     offsetsPath = os.path.join(config.parameterpath, f'offsets{config.filter}.mat')
     qualVectorPath = os.path.join(config.parameterpath, f'qualVector{config.filter}.mat')
 
@@ -328,9 +338,22 @@ def stackImages(config):
 
         darkPath = config.darkPathH if config.filter == "H" else config.darkPathRGB
 
-        darkFrame = imread(os.path.join(config.basepath, darkPath), IMREAD_GRAYSCALE)  
-        darkFrame = darkFrame[config.ROI_y[0]:config.ROI_y[1], config.ROI_x[0]:config.ROI_x[1]]
-        darkFrame = darkFrame.astype(np.float32)/(255.0**darkFrame.dtype.itemsize)
+        darkFrameArray = getDarks(config, darkPath, ".png")  
+        darkFrame = np.zeros(((config.ROI_y[1] - config.ROI_y[0]), (config.ROI_x[1] - config.ROI_x[0])), dtype=np.float32)
+
+        for k in range(len(darkFrameArray)):
+            print("Stacking", f'{len(darkFrameArray)}', "darks: {}%".format(int(100*k/(len(darkFrameArray)-1))), end=" ", flush=True)
+            print("\r", end='')
+            tmpFrame = np.asarray(imread(darkFrameArray[k],IMREAD_GRAYSCALE))
+            tmpFrame = tmpFrame.astype(np.float32)/(255.0**darkFrame.dtype.itemsize)
+            tmpFrame = tmpFrame[config.ROI_y[0]:config.ROI_y[1], config.ROI_x[0]:config.ROI_x[1]]
+            darkFrame = darkFrame+tmpFrame/len(darkFrameArray)
+
+        print("\n")
+
+        #darkFrame = imread(os.path.join(config.basepath, darkPath), IMREAD_GRAYSCALE)  
+        #darkFrame = darkFrame[config.ROI_y[0]:config.ROI_y[1], config.ROI_x[0]:config.ROI_x[1]]
+        #darkFrame = darkFrame.astype(np.float32)/(255.0**darkFrame.dtype.itemsize)
 
         stackFrame = np.zeros(((config.ROI_y[1] - config.ROI_y[0]), (config.ROI_x[1] - config.ROI_x[0])), dtype=np.float32)
         temparray = np.zeros(((config.ROI_y[1] - config.ROI_y[0]), (config.ROI_x[1] - config.ROI_x[0]), config.medianOver), dtype=np.float32)
@@ -351,7 +374,7 @@ def stackImages(config):
 
             tempcount += 1
             if (((i+1) % config.medianOver) == 0):
-                print("Stacking", f'{len(selectedFrames)}', "frames: {}%".format(int(100*i/(len(selectedFrames)-1))), end=" ", flush=True)
+                print("Stacking", f'{len(selectedFrames)}', "lights: {}%".format(int(100*i/(len(selectedFrames)-1))), end=" ", flush=True)
                 print("\r", end='')
                 stackFrame = stackFrame + np.median(temparray,axis=2)/(len(selectedFrames)//config.medianOver);
                 temparray = np.zeros(((config.ROI_y[1] - config.ROI_y[0]), (config.ROI_x[1] - config.ROI_x[0]), config.medianOver), dtype=np.float32)
@@ -379,11 +402,11 @@ def selectMethod():
 
    filterTuple = ("L","R","G","B","H")
    alignTuple = ("L","R","G","B","H")
-   inputTuple = (".png", ".tif")
+   lightInputTuple = (".png", ".tif")
    if todoSelector.get()==0:
         config.maxStars=s0.get()
         config.filter = filterTuple[filterSelector.get()]
-        config.inputFormat = inputTuple[inputFormatSelector.get()]
+        config.lightInputFormat = lightInputTuple[lightInputFormatSelector.get()]
         readImages(config)  
    elif todoSelector.get()==1:
         config.discardPercentage=s1.get()
@@ -394,7 +417,7 @@ def selectMethod():
         computeOffsets(config)
    elif todoSelector.get()==2:
         config.filter = filterTuple[filterSelector.get()]
-        config.inputFormat = inputTuple[inputFormatSelector.get()]
+        config.lightInputFormat = lightInputTuple[lightInputFormatSelector.get()]
         config.medianOver=s4.get()
         stackImages(config)
 
@@ -414,10 +437,10 @@ config = Config()
 todoSelector = IntVar()
 filterSelector = IntVar()
 alignSelector = IntVar()
-inputFormatSelector = IntVar()
+lightInputFormatSelector = IntVar()
 filterSelector.set(1)
 alignSelector.set(1)
-inputFormatSelector.set(0)
+lightInputFormatSelector.set(0)
 
 v0 = DoubleVar()
 v1 = DoubleVar()
@@ -459,10 +482,7 @@ a3 = Radiobutton(win, text="Align by Ha", variable=alignSelector, value=4).grid(
 
 B2 = Button(text="Select base path", command=selectPathButton).grid(row=0, column=5)
 Label(master=win,textvariable=pathString).grid(row=1, column=5)
-g0 = Radiobutton(win, text="Read PNG", variable=inputFormatSelector, value=0).grid(row=2, column=5, sticky='w')
-g1 = Radiobutton(win, text="Read TIF", variable=inputFormatSelector, value=1).grid(row=3, column=5, sticky='w')
+g0 = Radiobutton(win, text="Read PNG", variable=lightInputFormatSelector, value=0).grid(row=2, column=5, sticky='w')
+g1 = Radiobutton(win, text="Read TIF", variable=lightInputFormatSelector, value=1).grid(row=3, column=5, sticky='w')
 
 win.mainloop()
-
-
-
