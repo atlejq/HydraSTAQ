@@ -352,10 +352,9 @@ def stackImages(config):
                 print("\r", end='')
                 tmpFrame = np.asarray(imread(darkFrameArray[k],IMREAD_GRAYSCALE))
                 tmpFrame = tmpFrame[config.ROI_y[0]:config.ROI_y[1], config.ROI_x[0]:config.ROI_x[1]]
-                tmpFrame = tmpFrame.astype(np.float32)/(255.0**darkFrame.dtype.itemsize)
-                tmpFrame = tmpFrame[config.ROI_y[0]:config.ROI_y[1], config.ROI_x[0]:config.ROI_x[1]]
-                darkFrame = darkFrame+tmpFrame
-           
+                tmpFrame = tmpFrame.astype(np.float32)/(255**tmpFrame.dtype.itemsize)
+                darkFrame = darkFrame+tmpFrame/len(darkFrameArray)
+         
         #imwrite(os.path.join(config.basePath, darkPath, 'MasterDarkFrame.png'),darkFrame)
         print("\n")
 
@@ -392,7 +391,7 @@ def stackImages(config):
 
         imwrite(os.path.join(config.outputPath, f'{len(selectedFrames)}_{config.filter}.tif'), stackFrame)
 
-        plt.imshow(darkFrame, cmap='gray')
+        plt.imshow(stackFrame, cmap='gray')
         plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0, hspace = 0, wspace = 0)
         plt.axis('off')
         plt.show()
