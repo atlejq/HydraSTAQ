@@ -173,7 +173,7 @@ def readImages(config):
     
         for n in range(len(lightFrameArray)):  
             lightFrame = np.asarray(imread(lightFrameArray[n], IMREAD_GRAYSCALE))
-            lightFrame = lightFrame[config.ROI_y[0]:config.ROI_y[1], config.ROI_x[0]:config.ROI_x[1]]
+            lightFrame = lightFrame[config.ROI_y[0]-1:config.ROI_y[1], config.ROI_x[0]-1:config.ROI_x[1]]
 
             background.append(np.sum(lightFrame))
 
@@ -272,7 +272,7 @@ def computeOffsets(config):
         selectedFrames = selectedFrames[discardFrames == 0]
 
         maxQualFrame = np.asarray(imread(maxQualFramePath[0], IMREAD_GRAYSCALE))
-        maxQualFrame = maxQualFrame[config.ROI_y[0]:config.ROI_y[1], config.ROI_x[0]:config.ROI_x[1]]
+        maxQualFrame = maxQualFrame[config.ROI_y[0]-1:config.ROI_y[1], config.ROI_x[0]-1:config.ROI_x[1]]
 
         end_time = time()
         end_timeP = process_time()
@@ -341,46 +341,43 @@ def stackImages(config):
         if(os.path.isfile(os.path.join(config.basePath, darkPath, 'MasterDarkFrame.tif'))):
             print("Loading master dark frame")
             darkFrame = imread(os.path.join(config.basePath, darkPath, 'MasterDarkFrame.tif'), flags=(IMREAD_GRAYSCALE | IMREAD_ANYDEPTH))  
-            darkFrame = darkFrame[config.ROI_y[0]:config.ROI_y[1], config.ROI_x[0]:config.ROI_x[1]]
+            darkFrame = darkFrame[config.ROI_y[0]-1:config.ROI_y[1], config.ROI_x[0]-1:config.ROI_x[1]]
             darkFrame = darkFrame.astype(np.float32)/(255.0**darkFrame.dtype.itemsize)       
         else:
             darkFrameArray = getDarks(config, darkPath, ".png")  
-            darkFrame = np.zeros(((config.ROI_y[1] - config.ROI_y[0]), (config.ROI_x[1] - config.ROI_x[0])), dtype=np.float32)
-
+            darkFrame = np.zeros(((1+config.ROI_y[1] - config.ROI_y[0]), (1+config.ROI_x[1] - config.ROI_x[0])), dtype=np.float32)
             for k in range(len(darkFrameArray)):
                 print("Stacking", f'{len(darkFrameArray)}', "darks: {}%".format(int(100*k/(len(darkFrameArray)-1))), end=" ", flush=True)
                 print("\r", end='')
                 tmpFrame = np.asarray(imread(darkFrameArray[k],IMREAD_GRAYSCALE))
-                tmpFrame = tmpFrame[config.ROI_y[0]:config.ROI_y[1], config.ROI_x[0]:config.ROI_x[1]]
+                tmpFrame = tmpFrame[config.ROI_y[0]-1:config.ROI_y[1], config.ROI_x[0]-1:config.ROI_x[1]]
                 tmpFrame = tmpFrame.astype(np.float32)/(255**tmpFrame.dtype.itemsize)
                 darkFrame = darkFrame+tmpFrame/len(darkFrameArray)
          
-        imwrite(os.path.join(config.basePath, darkPath, 'MasterDarkFrame.tif'),darkFrame)
-        print("\n")
+            imwrite(os.path.join(config.basePath, darkPath, 'MasterDarkFrame.tif'),darkFrame)
 
-        stackFrame = np.zeros(((config.ROI_y[1] - config.ROI_y[0]), (config.ROI_x[1] - config.ROI_x[0])), dtype=np.float32)
-        temparray = np.zeros(((config.ROI_y[1] - config.ROI_y[0]), (config.ROI_x[1] - config.ROI_x[0]), config.medianOver), dtype=np.float32)
+        print("\n")
+        stackFrame = np.zeros(((1+config.ROI_y[1] - config.ROI_y[0]), (1+config.ROI_x[1] - config.ROI_x[0])), dtype=np.float32)
+        temparray = np.zeros(((1+config.ROI_y[1] - config.ROI_y[0]), (1+config.ROI_x[1] - config.ROI_x[0]), config.medianOver), dtype=np.float32)
 
         tempcount = 1
 
         for i in range(len(selectedFrames)):
             lightFrame = np.asarray(imread(lightFrameArray[selectedFrames[i]],IMREAD_GRAYSCALE))
-            lightFrame = lightFrame[config.ROI_y[0]:config.ROI_y[1], config.ROI_x[0]:config.ROI_x[1]]
+            lightFrame = lightFrame[config.ROI_y[0]-1:config.ROI_y[1], config.ROI_x[0]-1:config.ROI_x[1]]
             lightFrame = lightFrame.astype(np.float32)/(255**lightFrame.dtype.itemsize)
             lightFrame *= max(background[selectedFrames])/background[selectedFrames[i]]
             lightFrame -= darkFrame
          
             M = np.float32([[np.cos(th[i]), -np.sin(th[i]), dx[i]], [np.sin(th[i]), np.cos(th[i]), dy[i]]])
-            lightFrame = warpAffine(lightFrame,M,(lightFrame.shape[1], lightFrame.shape[0]))
-       
-            temparray[:, :, tempcount-1] = lightFrame[:(config.ROI_y[1] - config.ROI_y[0]), :(config.ROI_x[1] - config.ROI_x[0])]
+            temparray[:, :, tempcount-1] = warpAffine(lightFrame,M,(lightFrame.shape[1], lightFrame.shape[0]))
 
             tempcount += 1
             if (((i+1) % config.medianOver) == 0):
                 print("Stacking", f'{len(selectedFrames)}', "lights: {}%".format(int(100*i/(len(selectedFrames)-1))), end=" ", flush=True)
                 print("\r", end='')
                 stackFrame = stackFrame + np.median(temparray,axis=2)/(len(selectedFrames)//config.medianOver);
-                temparray = np.zeros(((config.ROI_y[1] - config.ROI_y[0]), (config.ROI_x[1] - config.ROI_x[0]), config.medianOver), dtype=np.float32)
+                temparray = np.zeros(((1+config.ROI_y[1] - config.ROI_y[0]), (1+config.ROI_x[1] - config.ROI_x[0]), config.medianOver), dtype=np.float32)
                 tempcount = 1;
 
         end_time = time()
