@@ -13,7 +13,7 @@ from tkinter import Tk, IntVar, DoubleVar, StringVar, Scale, Radiobutton, Button
 class Config:  
     # Configuration class to hold and manage all the configuration parameters.   
     def __init__(self):
-        self.basePath = 'C:/F/astro/matlab/m1test/'
+        self.basePath = 'C:/F/astro/matlab/m1/'
         self.parameterPath = self.basePath + 'parametersPy'
         self.outputPath = self.basePath + 'outPy'
         self.darkPathRGB = 'darks/10minus'
@@ -462,10 +462,10 @@ Label(win, text="Ref. align stars").grid(row=2, column=1)
 Label(win, text="Align stars").grid(row=3, column=1)
 Label(win, text="Median over").grid(row=4, column=1)
 
-s0 = Scale(win, variable = v0, from_ = 5, to = 10, orient = HORIZONTAL); s0.grid(row=0, column=2); s0.set(10)
+s0 = Scale(win, variable = v0, from_ = 5, to = 15, orient = HORIZONTAL); s0.grid(row=0, column=2); s0.set(15)
 s1 = Scale(win, variable = v1, from_ = 0, to = 99, orient = HORIZONTAL); s1.grid(row=1, column=2); s1.set(10)
-s2 = Scale(win, variable = v2, from_ = 3, to = 8, orient = HORIZONTAL); s2.grid(row=2, column=2); s2.set(4)
-s3 = Scale(win, variable = v3, from_ = 3, to = 8, orient = HORIZONTAL); s3.grid(row=3, column=2); s3.set(4)
+s2 = Scale(win, variable = v2, from_ = 4, to = 8, orient = HORIZONTAL); s2.grid(row=2, column=2); s2.set(6)
+s3 = Scale(win, variable = v3, from_ = 4, to = 8, orient = HORIZONTAL); s3.grid(row=3, column=2); s3.set(6)
 s4 = Scale(win, variable = v4, from_ = 10, to = 30, orient = HORIZONTAL); s4.grid(row=4, column=2); s4.set(30)
 
 f0 = Radiobutton(win, text="Process L", variable=filterSelector, value=0).grid(row=0, column=3, sticky='w')
