@@ -362,7 +362,11 @@ def stackImages(config):
 
         tempcount = 1
 
-        for i in range(len(selectedFrames)):
+        iterator = np.arange(0,len(selectedFrames),1,dtype = int)
+        np.random.shuffle(iterator)
+
+        for k in range(len(selectedFrames)):
+            i = iterator[k];
             lightFrame = np.asarray(imread(lightFrameArray[selectedFrames[i]],IMREAD_GRAYSCALE))
             lightFrame = lightFrame[config.ROI_y[0]-1:config.ROI_y[1], config.ROI_x[0]-1:config.ROI_x[1]]
             lightFrame = lightFrame.astype(np.float32)/(255**lightFrame.dtype.itemsize)
@@ -373,8 +377,8 @@ def stackImages(config):
             temparray[:, :, tempcount-1] = warpAffine(lightFrame,M,(lightFrame.shape[1], lightFrame.shape[0]))
 
             tempcount += 1
-            if (((i+1) % config.medianOver) == 0):
-                print("Stacking", f'{len(selectedFrames)}', "lights: {}%".format(int(100*i/(len(selectedFrames)-1))), end=" ", flush=True)
+            if (((k+1) % config.medianOver) == 0):
+                print("Stacking", f'{len(selectedFrames)}', "lights: {}%".format(int(100*k/(len(selectedFrames)-1))), end=" ", flush=True)
                 print("\r", end='')
                 stackFrame = stackFrame + np.median(temparray,axis=2)/(len(selectedFrames)//config.medianOver);
                 temparray = np.zeros(((1+config.ROI_y[1] - config.ROI_y[0]), (1+config.ROI_x[1] - config.ROI_x[0]), config.medianOver), dtype=np.float32)
