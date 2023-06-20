@@ -26,8 +26,8 @@ class Config:
         self.topMatchesMasterAlign = int
         self.topMatchesMonoAlign = int
         self.medianOver = int
-        self.ROI_y =  [10, 2822]
-        self.ROI_x =  [10, 4144]
+        self.ROI_y =  [1, 2822]
+        self.ROI_x =  [1, 4144]
 
 
 def getLights(config, frameType, fileFormat):   
@@ -41,7 +41,7 @@ def getLights(config, frameType, fileFormat):
   
     return filenames
 
-def getDarks(config, frameType, fileFormat):   
+def getCalibrationFrames(config, frameType, fileFormat):   
     #Function to get all the file names in the given directory.   
     filenames = []
     for root, dirs, files in os.walk(os.path.join(config.basePath, frameType)):
@@ -343,7 +343,7 @@ def stackImages(config):
             darkFrame = imread(os.path.join(config.basePath, darkPath, 'MasterDarkFrame.tif'), flags=(IMREAD_GRAYSCALE | IMREAD_ANYDEPTH))  
             darkFrame = darkFrame.astype(np.float32)      
         else:
-            darkFrameArray = getDarks(config, darkPath, ".png")  
+            darkFrameArray = getCalibrationFrames(config, darkPath, ".png")  
             darkFrame = np.zeros(((1+config.ROI_y[1] - config.ROI_y[0]), (1+config.ROI_x[1] - config.ROI_x[0])), dtype=np.float32)
             for k in range(len(darkFrameArray)):
                 print("Stacking", f'{len(darkFrameArray)}', "darks: {}%".format(int(100*k/(len(darkFrameArray)-1))), end=" ", flush=True)
