@@ -26,8 +26,8 @@ class Config:
         self.topMatchesMasterAlign = int
         self.topMatchesMonoAlign = int
         self.medianOver = int
-        self.ROI_y =  [1, 2822]
-        self.ROI_x =  [1, 4144]
+        self.ROI_y =  [10, 2822]
+        self.ROI_x =  [10, 4144]
 
 
 def getLights(config, frameType, fileFormat):   
@@ -341,8 +341,7 @@ def stackImages(config):
         if(os.path.isfile(os.path.join(config.basePath, darkPath, 'MasterDarkFrame.tif'))):
             print("Loading master dark frame")
             darkFrame = imread(os.path.join(config.basePath, darkPath, 'MasterDarkFrame.tif'), flags=(IMREAD_GRAYSCALE | IMREAD_ANYDEPTH))  
-            darkFrame = darkFrame[config.ROI_y[0]-1:config.ROI_y[1], config.ROI_x[0]-1:config.ROI_x[1]]
-            darkFrame = darkFrame.astype(np.float32)/(255.0**darkFrame.dtype.itemsize)       
+            darkFrame = darkFrame.astype(np.float32)      
         else:
             darkFrameArray = getDarks(config, darkPath, ".png")  
             darkFrame = np.zeros(((1+config.ROI_y[1] - config.ROI_y[0]), (1+config.ROI_x[1] - config.ROI_x[0])), dtype=np.float32)
