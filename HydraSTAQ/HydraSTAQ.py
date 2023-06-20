@@ -55,11 +55,12 @@ def getCalibrationFrames(config, frameType, fileFormat):
 def analyzeStarField(lightFrame, config):
     #Function to analyze the star field in the given light frame.
     if config.filter == "H":
-        threshold = 0.5
-        factor = 3
+        threshold = 0.88
+        factor = 22
     else:
         threshold = 0.88
         factor = 1
+
     filteredImage = medianBlur(factor*lightFrame,3) 
     
     BW = filteredImage > threshold*(255**lightFrame.dtype.itemsize) 
@@ -114,7 +115,7 @@ def findRT(A, B):
 
 def alignFrames(refVectorX, refVectorY, refTriangles, topMatches, xvec, yvec):
     #Function that aligns the frames with a "vote matrix"
-    e = 0.0005
+    e = 0.01
     frameTriangles = triangles(xvec, yvec)
     vote = np.zeros((len(refVectorX), len(yvec)))
     cVote = np.zeros((len(refVectorX), len(yvec)))
