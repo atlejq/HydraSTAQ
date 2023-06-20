@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from cv2 import medianBlur, imread, imwrite, warpAffine, IMREAD_GRAYSCALE
+from cv2 import medianBlur, imread, imwrite, warpAffine, IMREAD_GRAYSCALE, IMREAD_ANYDEPTH
 from math import sqrt
 from matplotlib import pyplot as plt
 from scipy.io import loadmat, savemat
@@ -296,9 +296,9 @@ def computeOffsets(config):
 
         plt.show()
 
-        #plt.figure(5)
-        #plt.plot(th)
-        #plt.show()
+        plt.figure(5)
+        plt.plot(th)
+        plt.show()
 
         plt.figure(2)
         plt.plot(qual)
@@ -338,9 +338,9 @@ def stackImages(config):
 
         darkPath = config.darkPathH if config.filter == "H" else config.darkPathRGB
 
-        if(os.path.isfile(os.path.join(config.basePath, darkPath, 'MasterDarkFrame.png'))):
+        if(os.path.isfile(os.path.join(config.basePath, darkPath, 'MasterDarkFrame.tif'))):
             print("Loading master dark frame")
-            darkFrame = imread(os.path.join(config.basePath, darkPath, 'MasterDarkFrame.png'), IMREAD_GRAYSCALE)  
+            darkFrame = imread(os.path.join(config.basePath, darkPath, 'MasterDarkFrame.tif'), flags=(IMREAD_GRAYSCALE | IMREAD_ANYDEPTH))  
             darkFrame = darkFrame[config.ROI_y[0]:config.ROI_y[1], config.ROI_x[0]:config.ROI_x[1]]
             darkFrame = darkFrame.astype(np.float32)/(255.0**darkFrame.dtype.itemsize)       
         else:
@@ -355,7 +355,7 @@ def stackImages(config):
                 tmpFrame = tmpFrame.astype(np.float32)/(255**tmpFrame.dtype.itemsize)
                 darkFrame = darkFrame+tmpFrame/len(darkFrameArray)
          
-        #imwrite(os.path.join(config.basePath, darkPath, 'MasterDarkFrame.png'),darkFrame)
+        imwrite(os.path.join(config.basePath, darkPath, 'MasterDarkFrame.tif'),darkFrame)
         print("\n")
 
         stackFrame = np.zeros(((config.ROI_y[1] - config.ROI_y[0]), (config.ROI_x[1] - config.ROI_x[0])), dtype=np.float32)
