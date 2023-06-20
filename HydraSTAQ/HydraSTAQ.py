@@ -13,7 +13,7 @@ from tkinter import Tk, IntVar, DoubleVar, StringVar, Scale, Radiobutton, Button
 class Config:  
     # Configuration class to hold and manage all the configuration parameters.   
     def __init__(self):
-        self.basePath = 'C:/F/astro/matlab/m1/'
+        self.basePath = 'C:/F/astro/matlab/m27/'
         self.parameterPath = self.basePath + 'parametersPy'
         self.outputPath = self.basePath + 'outPy'
         self.darkPathRGB = 'darks/10minus'
@@ -55,8 +55,8 @@ def getCalibrationFrames(config, frameType, fileFormat):
 def analyzeStarField(lightFrame, config):
     #Function to analyze the star field in the given light frame.
     if config.filter == "H":
-        threshold = 0.88
-        factor = 22
+        threshold = 0.44
+        factor = 3
     else:
         threshold = 0.88
         factor = 1
