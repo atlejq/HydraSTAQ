@@ -12,9 +12,9 @@ from tkinter import Tk, IntVar, DoubleVar, StringVar, Scale, Radiobutton, Button
 class Config:  
     # Configuration class to hold and manage all the configuration parameters.   
     def __init__(self):
-        self.basePath = 'C:/F/astro/matlab/m1test/'
-        self.parameterPath = self.basePath + 'parametersPy'
-        self.outputPath = self.basePath + 'outPy'
+        self.basePath = str
+        self.parameterPath = 'parametersPy'
+        self.outputPath = 'outPy'
         self.darkPathRGB = 'darks/10minus'
         self.darkPathH = 'darks/20minus'
         self.lightInputFormat = str
@@ -38,7 +38,7 @@ def getLights(config, frameType, fileFormat):
                 if file.endswith(fileFormat):
                     filenames.append(os.path.join(root, file))
   
-    return 
+    return filenames
 
 
 def getCalibrationFrames(config, frameType, fileFormat):   
@@ -209,11 +209,13 @@ def readImages(config):
         print("Elapsed time:", f'{end_time - start_time:.4f}') 
         print("Elapsed CPU time:", f'{end_timeP - start_timeP:.4f}', "\n") 
 
-        savemat(os.path.join(config.parameterPath, f'xvec{config.filter}.mat'), {'xvec': xvec})
-        savemat(os.path.join(config.parameterPath, f'yvec{config.filter}.mat'), {'yvec': yvec})
-        savemat(os.path.join(config.parameterPath, f'qualVector{config.filter}.mat'), {'qualVector': qualVector})
-        savemat(os.path.join(config.parameterPath, f'maxQualFramePath{config.filter}.mat'), {'maxQualFramePath': maxQualFramePath})
-        savemat(os.path.join(config.parameterPath, f'refVector{config.filter}.mat'), {'refVector': refVector})
+        if not os.path.isdir(os.path.join(config.basePath, config.parameterPath)): os.makedirs(config.basePath, config.parameterPath)           
+
+        savemat(os.path.join(config.basePath, config.parameterPath, f'xvec{config.filter}.mat'), {'xvec': xvec})
+        savemat(os.path.join(config.basePath, config.parameterPath, f'yvec{config.filter}.mat'), {'yvec': yvec})
+        savemat(os.path.join(config.basePath, config.parameterPath, f'qualVector{config.filter}.mat'), {'qualVector': qualVector})
+        savemat(os.path.join(config.basePath, config.parameterPath, f'maxQualFramePath{config.filter}.mat'), {'maxQualFramePath': maxQualFramePath})
+        savemat(os.path.join(config.basePath, config.parameterPath, f'refVector{config.filter}.mat'), {'refVector': refVector})
     else:
         print("No image files found.")
 
@@ -222,12 +224,12 @@ def computeOffsets(config):
     start_time = time()
     start_timeP = process_time()
 
-    xvecPath = os.path.join(config.parameterPath, f'xvec{config.filter}.mat')
-    yvecPath = os.path.join(config.parameterPath, f'yvec{config.filter}.mat')
-    qualVectorPath = os.path.join(config.parameterPath, f'qualVector{config.filter}.mat')
-    maxQualFramePath = os.path.join(config.parameterPath, f'maxQualFramePath{config.filter}.mat')
-    refVector = os.path.join(config.parameterPath, f'refVector{config.filter}.mat')
-    refVectorAlign = os.path.join(config.parameterPath, f'refVector{config.align}.mat')
+    xvecPath = os.path.join(config.basePath, config.parameterPath, f'xvec{config.filter}.mat')
+    yvecPath = os.path.join(config.basePath, config.parameterPath, f'yvec{config.filter}.mat')
+    qualVectorPath = os.path.join(config.basePath, config.parameterPath, f'qualVector{config.filter}.mat')
+    maxQualFramePath = os.path.join(config.basePath, config.parameterPath, f'maxQualFramePath{config.filter}.mat')
+    refVector = os.path.join(config.basePath, config.parameterPath, f'refVector{config.filter}.mat')
+    refVectorAlign = os.path.join(config.basePath, config.parameterPath, f'refVector{config.align}.mat')
 
     if(all([os.path.isfile(f) for f in [xvecPath, yvecPath, qualVectorPath, maxQualFramePath, refVector, refVectorAlign]])):  
         xvec = loadmat(xvecPath)['xvec'].ravel()
@@ -302,16 +304,6 @@ def computeOffsets(config):
         plt.plot(th)
         plt.show()
 
-        #plt.figure(2)
-        #plt.plot(qual)
-        #plt.plot(background/np.max(background))
-        #plt.legend(['Quality', 'Background'])
-        #plt.plot(qual[selectedFrames])
-        #plt.plot(background[selectedFrames]/np.max(background[selectedFrames]))
-        #plt.legend(['Quality', 'Background'])
-        #plt.show()
-
-        # Initialise the subplot function using number of rows and columns
         fig, (ax1, ax2)  = plt.subplots(1, 2, sharey='row')  
         ax1.plot(qual)
         ax1.plot(background/np.max(background))
@@ -323,7 +315,7 @@ def computeOffsets(config):
         plt.show()
 
         offsets = np.array([dx, dy, th, selectedFrames]).T
-        savemat(os.path.join(config.parameterPath,  f'offsets{config.filter}.mat'), {'offsets': offsets})
+        savemat(os.path.join(config.basePath, config.parameterPath,  f'offsets{config.filter}.mat'), {'offsets': offsets})
     else:
         print("Missing input files.", "\n")
 
@@ -333,8 +325,8 @@ def stackImages(config):
     start_timeP = process_time()
 
     lightFrameArray = getLights(config, 'lights', config.lightInputFormat)    
-    offsetsPath = os.path.join(config.parameterPath, f'offsets{config.filter}.mat')
-    qualVectorPath = os.path.join(config.parameterPath, f'qualVector{config.filter}.mat')
+    offsetsPath = os.path.join(config.basePath, config.parameterPath, f'offsets{config.filter}.mat')
+    qualVectorPath = os.path.join(config.basePath, config.parameterPath, f'qualVector{config.filter}.mat')
 
     if(len(lightFrameArray)>0 and all([os.path.isfile(f) for f in [offsetsPath, qualVectorPath]])):
         offsets = loadmat(offsetsPath)['offsets']
@@ -398,7 +390,8 @@ def stackImages(config):
         print("Elapsed time:", f'{end_time - start_time:.4f}') 
         print("Elapsed CPU time:", f'{end_timeP - start_timeP:.4f}', "\n") 
 
-        imwrite(os.path.join(config.outputPath, f'{len(selectedFrames)}_{config.filter}.tif'), stackFrame)
+        if not os.path.isdir(os.path.join(config.basePath, config.outputPath)): os.makedirs(os.path.join(config.basePath, config.outputPath))  
+        imwrite(os.path.join(config.basePath, config.outputPath, f'{len(selectedFrames)}_{config.filter}.tif'), stackFrame)
 
         plt.imshow(stackFrame, cmap='gray')
         plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0, hspace = 0, wspace = 0)
@@ -409,9 +402,6 @@ def stackImages(config):
 
 
 def selectMethod():
-   if not os.path.isdir(config.parameterPath): os.makedirs(config.parameterPath)           
-   if not os.path.isdir(os.path.join(config.outputPath)): os.makedirs(os.path.join(config.outputPath))  
-
    filterTuple = ("L","R","G","B","H")
    alignTuple = ("L","R","G","B","H")
    lightInputTuple = (".png", ".tif")
@@ -436,7 +426,7 @@ def selectMethod():
 def selectPathButton():
     basePathName = filedialog.askdirectory()
     pathString.set(basePathName)
-    config.basepath = basePathName
+    config.basePath = basePathName
 
 
 ###################################################
