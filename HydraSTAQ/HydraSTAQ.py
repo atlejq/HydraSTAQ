@@ -13,7 +13,7 @@ from tkinter import Tk, IntVar, DoubleVar, StringVar, Scale, Radiobutton, Button
 class Config:  
     # Configuration class to hold and manage all the configuration parameters.   
     def __init__(self):
-        self.basePath = 'C:/F/astro/matlab/m27/'
+        self.basePath = 'C:/F/astro/matlab/m1test/'
         self.parameterPath = self.basePath + 'parametersPy'
         self.outputPath = self.basePath + 'outPy'
         self.darkPathRGB = 'darks/10minus'
@@ -243,9 +243,12 @@ def computeOffsets(config):
         refVectorXAlign = refVectorAlign[0,:]
         refVectorYAlign = refVectorAlign[1,:] 
 
-        qt = scoreatpercentile(qual, config.discardPercentage)
-    
+        qt = scoreatpercentile(qual, config.discardPercentage)  
         selectedFrames = np.where(qt <= qual)[0]
+
+        #frames = np.array([np.arange(len(qual)),qual]).T
+        #orderedFrames = frames[np.argsort(frames[:, 1])][::-1]
+        #selectedFrames = orderedFrames[:int(len(qualVector)*(1-config.discardPercentage/100)),0].astype(int)
 
         dx = np.zeros(len(selectedFrames))
         dy = np.zeros(len(selectedFrames))
@@ -288,7 +291,7 @@ def computeOffsets(config):
         plt.axis('off')
         plt.scatter(refVectorXAlign, refVectorYAlign, s=100, facecolors='none', edgecolors='r')
 
-        for i in range(1,len(selectedFrames)):
+        for i in range(len(selectedFrames)):
             R = np.array([[np.cos(th[i]), -np.sin(th[i])], [np.sin(th[i]), np.cos(th[i])]])
             t = np.array([dx[i], dy[i]])
             debugMatrix = R.dot(np.array([xvec[selectedFrames[i]].ravel(), yvec[selectedFrames[i]].ravel()])) + np.repeat(t[:, np.newaxis], len(xvec[selectedFrames[i]].ravel()), axis=1)
