@@ -4,7 +4,6 @@ from cv2 import medianBlur, imread, imwrite, warpAffine, IMREAD_GRAYSCALE, IMREA
 from math import sqrt
 from matplotlib import pyplot as plt
 from scipy.io import loadmat, savemat
-from scipy.stats import scoreatpercentile
 from skimage.measure import regionprops, label as lbl
 from time import time, process_time
 from tkinter import Tk, IntVar, DoubleVar, StringVar, Scale, Radiobutton, Button, Label, HORIZONTAL, filedialog
@@ -243,12 +242,9 @@ def computeOffsets(config):
         refVectorXAlign = refVectorAlign[0,:]
         refVectorYAlign = refVectorAlign[1,:] 
 
-        qt = scoreatpercentile(qual, config.discardPercentage)  
-        selectedFrames = np.where(qt <= qual)[0]
-
-        #frames = np.array([np.arange(len(qual)),qual]).T
-        #orderedFrames = frames[np.argsort(frames[:, 1])][::-1]
-        #selectedFrames = orderedFrames[:int(len(qualVector)*(1-config.discardPercentage/100)),0].astype(int)
+        frames = np.array([np.arange(len(qual)),qual]).T
+        orderedFrames = frames[np.argsort(frames[:, 1])][::-1]
+        selectedFrames = np.sort(orderedFrames[:int(len(qualVector)*(1-config.discardPercentage/100)),0].astype(int))
 
         dx = np.zeros(len(selectedFrames))
         dy = np.zeros(len(selectedFrames))
@@ -343,7 +339,7 @@ def stackImages(config):
         darkPath = config.darkPathH if config.filter == "H" else config.darkPathRGB
 
         if(os.path.isfile(os.path.join(config.basePath, darkPath, 'MasterDarkFrame.tif'))):
-            print("Loading master dark frame")
+            print("Loading master dark frame", "\n")
             darkFrame = imread(os.path.join(config.basePath, darkPath, 'MasterDarkFrame.tif'), flags=(IMREAD_GRAYSCALE | IMREAD_ANYDEPTH))  
             darkFrame = darkFrame.astype(np.float32)      
         else:
@@ -359,7 +355,6 @@ def stackImages(config):
          
             imwrite(os.path.join(config.basePath, darkPath, 'MasterDarkFrame.tif'),darkFrame)
 
-        print("\n")
         stackFrame = np.zeros(((1+config.ROI_y[1] - config.ROI_y[0]), (1+config.ROI_x[1] - config.ROI_x[0])), dtype=np.float32)
         temparray = np.zeros(((1+config.ROI_y[1] - config.ROI_y[0]), (1+config.ROI_x[1] - config.ROI_x[0]), config.medianOver), dtype=np.float32)
 
