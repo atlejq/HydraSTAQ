@@ -1,3 +1,4 @@
+from asyncio.windows_events import NULL
 import os
 import numpy as np
 from cv2 import medianBlur, imread, imwrite, warpAffine, IMREAD_GRAYSCALE, IMREAD_ANYDEPTH
@@ -12,7 +13,7 @@ from tkinter import Tk, IntVar, DoubleVar, StringVar, Scale, Radiobutton, Button
 class Config:  
     # Configuration class to hold and manage all the configuration parameters.   
     def __init__(self):
-        self.basePath = str
+        self.basePath = ""
         self.parameterPath = 'parametersPy'
         self.outputPath = 'outPy'
         self.darkPathRGB = 'darks/10minus'
@@ -209,7 +210,7 @@ def readImages(config):
         print("Elapsed time:", f'{end_time - start_time:.4f}') 
         print("Elapsed CPU time:", f'{end_timeP - start_timeP:.4f}', "\n") 
 
-        if not os.path.isdir(os.path.join(config.basePath, config.parameterPath)): os.makedirs(config.basePath, config.parameterPath)           
+        if not os.path.isdir(os.path.join(config.basePath, config.parameterPath)): os.makedirs(os.path.join(config.basePath, config.parameterPath))         
 
         savemat(os.path.join(config.basePath, config.parameterPath, f'xvec{config.filter}.mat'), {'xvec': xvec})
         savemat(os.path.join(config.basePath, config.parameterPath, f'yvec{config.filter}.mat'), {'yvec': yvec})
@@ -402,26 +403,29 @@ def stackImages(config):
 
 
 def selectMethod():
-   filterTuple = ("L","R","G","B","H")
-   alignTuple = ("L","R","G","B","H")
-   lightInputTuple = (".png", ".tif")
-   if todoSelector.get()==0:
-        config.maxStars=s0.get()
-        config.filter = filterTuple[filterSelector.get()]
-        config.lightInputFormat = lightInputTuple[lightInputFormatSelector.get()]
-        readImages(config)  
-   elif todoSelector.get()==1:
-        config.discardPercentage=s1.get()
-        config.filter = filterTuple[filterSelector.get()]
-        config.align = alignTuple[alignSelector.get()]
-        config.topMatchesMasterAlign=(s2.get()-1)
-        config.topMatchesMonoAlign=(s3.get()-1)
-        computeOffsets(config)
-   elif todoSelector.get()==2:
-        config.filter = filterTuple[filterSelector.get()]
-        config.lightInputFormat = lightInputTuple[lightInputFormatSelector.get()]
-        config.medianOver=s4.get()
-        stackImages(config)
+   if config.basePath == "":
+        print("Please enter a valid directory.")
+   else:
+        filterTuple = ("L","R","G","B","H")
+        alignTuple = ("L","R","G","B","H")
+        lightInputTuple = (".png", ".tif")
+        if todoSelector.get()==0:
+            config.maxStars=s0.get()
+            config.filter = filterTuple[filterSelector.get()]
+            config.lightInputFormat = lightInputTuple[lightInputFormatSelector.get()]
+            readImages(config)  
+        elif todoSelector.get()==1:
+            config.discardPercentage=s1.get()
+            config.filter = filterTuple[filterSelector.get()]
+            config.align = alignTuple[alignSelector.get()]
+            config.topMatchesMasterAlign=(s2.get()-1)
+            config.topMatchesMonoAlign=(s3.get()-1)
+            computeOffsets(config)
+        elif todoSelector.get()==2:
+            config.filter = filterTuple[filterSelector.get()]
+            config.lightInputFormat = lightInputTuple[lightInputFormatSelector.get()]
+            config.medianOver=s4.get()
+            stackImages(config)
 
 def selectPathButton():
     basePathName = filedialog.askdirectory()
