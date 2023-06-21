@@ -302,17 +302,25 @@ def computeOffsets(config):
         plt.plot(th)
         plt.show()
 
-        plt.figure(2)
-        plt.plot(qual)
-        plt.plot(background/np.max(background))
-        plt.legend(['Quality', 'Background'])
-        plt.show()
-    
-        #plt.figure(3)
+        #plt.figure(2)
+        #plt.plot(qual)
+        #plt.plot(background/np.max(background))
+        #plt.legend(['Quality', 'Background'])
         #plt.plot(qual[selectedFrames])
         #plt.plot(background[selectedFrames]/np.max(background[selectedFrames]))
         #plt.legend(['Quality', 'Background'])
-        #plt.show() 
+        #plt.show()
+
+        # Initialise the subplot function using number of rows and columns
+        fig, (ax1, ax2)  = plt.subplots(1, 2, sharey='row')  
+        ax1.plot(qual)
+        ax1.plot(background/np.max(background))
+        ax1.legend(['Quality', 'Background'])
+  
+        ax2.plot(qual[selectedFrames])
+        ax2.plot(background[selectedFrames]/np.max(background[selectedFrames]))
+        ax2.legend(['Quality', 'Background'])
+        plt.show()
 
         offsets = np.array([dx, dy, th, selectedFrames]).T
         savemat(os.path.join(config.parameterPath,  f'offsets{config.filter}.mat'), {'offsets': offsets})
