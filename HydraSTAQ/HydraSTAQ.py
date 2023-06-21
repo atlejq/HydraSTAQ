@@ -38,7 +38,8 @@ def getLights(config, frameType, fileFormat):
                 if file.endswith(fileFormat):
                     filenames.append(os.path.join(root, file))
   
-    return filenames
+    return 
+
 
 def getCalibrationFrames(config, frameType, fileFormat):   
     #Function to get all the file names in the given directory.   
@@ -215,6 +216,7 @@ def readImages(config):
         savemat(os.path.join(config.parameterPath, f'refVector{config.filter}.mat'), {'refVector': refVector})
     else:
         print("No image files found.")
+
 
 def computeOffsets(config):
     start_time = time()
