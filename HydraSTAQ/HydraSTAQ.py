@@ -149,6 +149,7 @@ def alignFrames(refVectorX, refVectorY, refTriangles, topMatches, xvec, yvec):
         theta, t = findRT(frameMatrix, referenceMatrix)
         d = 0
     else:
+        print('Cannot stack frame')
         theta = 0
         t = np.zeros((2, 1))
         d = 1
@@ -226,6 +227,7 @@ def readImages(config):
 def computeOffsets(config):
     start_time = time()
     start_timeP = process_time()
+    print("Computed offsets for", f'{len(selectedFrames)}', "frames", "\n")
 
     xvecPath = os.path.join(config.basePath, config.parameterPath, f'xvec{config.filter}.mat')
     yvecPath = os.path.join(config.basePath, config.parameterPath, f'yvec{config.filter}.mat')
@@ -288,7 +290,6 @@ def computeOffsets(config):
         end_time = time()
         end_timeP = process_time()
     
-        print("Computed offsets for", f'{len(selectedFrames)}', "frames", "\n")
         print("Elapsed time:", f'{end_time - start_time:.4f}') 
         print("Elapsed CPU time:", f'{end_timeP - start_timeP:.4f}', "\n") 
 
@@ -348,7 +349,7 @@ def stackImages(config):
         darkPath = config.darkPathH if config.filter == "H" else config.darkPathRGB
 
         if(os.path.isfile(os.path.join(config.basePath, darkPath, 'MasterDarkFrame.tif'))):
-            print("Loading master dark frame", "\n")
+            print("Loading master dark frame")
             darkFrame = imread(os.path.join(config.basePath, darkPath, 'MasterDarkFrame.tif'), flags=(IMREAD_GRAYSCALE | IMREAD_ANYDEPTH))  
             darkFrame = darkFrame.astype(np.float32)      
         else:
@@ -363,6 +364,8 @@ def stackImages(config):
                 darkFrame = darkFrame+tmpFrame/len(darkFrameArray)
          
             imwrite(os.path.join(config.basePath, darkPath, 'MasterDarkFrame.tif'),darkFrame)
+
+        print("\n")
 
         stackFrame = np.zeros(((1+config.ROI_y[1] - config.ROI_y[0]), (1+config.ROI_x[1] - config.ROI_x[0])), dtype=np.float32)
         temparray = np.zeros(((1+config.ROI_y[1] - config.ROI_y[0]), (1+config.ROI_x[1] - config.ROI_x[0]), config.medianOver), dtype=np.float32)
