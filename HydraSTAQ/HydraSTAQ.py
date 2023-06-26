@@ -181,16 +181,20 @@ def readImages(config):
             starMatrix = analyzeStarField(lightFrame, config)
             stars.append(len(starMatrix))
 
-            corrMatrix = starMatrix[np.argsort(starMatrix[:, 4])][::-1]
+            if len(starMatrix) > 5:
 
-            corrMatrix = corrMatrix.T
+                corrMatrix = starMatrix[np.argsort(starMatrix[:, 4])][::-1]
+                corrMatrix = corrMatrix.T
         
-            if corrMatrix.shape[1] > config.maxStars:
-                corrMatrix = corrMatrix[:, :config.maxStars:]
+                if corrMatrix.shape[1] > config.maxStars:
+                    corrMatrix = corrMatrix[:, :config.maxStars:]
    
-            xvec[n] = (corrMatrix[0,:] + corrMatrix[2,:]/2)
-            yvec[n] = (corrMatrix[1,:] + corrMatrix[3,:]/2)
-        
+                xvec[n] = (corrMatrix[0,:] + corrMatrix[2,:]/2)
+                yvec[n] = (corrMatrix[1,:] + corrMatrix[3,:]/2)
+            else:
+                xvec[n] = []
+                yvec[n] = []
+
             if n % 10 == 0:
                 print("Reading", f'{len(lightFrameArray)}', "lights: {}%".format(int(100*n/(len(lightFrameArray)-1))), end=" ", flush=True)
                 print("\r", end='')
