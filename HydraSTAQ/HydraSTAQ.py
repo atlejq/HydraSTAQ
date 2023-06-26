@@ -149,7 +149,6 @@ def alignFrames(refVectorX, refVectorY, refTriangles, topMatches, xvec, yvec):
         theta, t = findRT(frameMatrix, referenceMatrix)
         d = 0
     else:
-        print('Cannot stack frame')
         theta = 0
         t = np.zeros((2, 1))
         d = 1
@@ -267,12 +266,16 @@ def computeOffsets(config):
 
         mth, mt, bla = alignFrames(refVectorXAlign, refVectorYAlign, refTrianglesAlign, config.topMatchesMasterAlign, refVectorX, refVectorY)
         for i in range(len(selectedFrames)):
-            theta, t, d = alignFrames(refVectorX, refVectorY, refTriangles, config.topMatchesMonoAlign, xvec[selectedFrames[i]].ravel(), yvec[selectedFrames[i]].ravel())
-            tmp = np.array([[np.cos(mth), -np.sin(mth)], [np.sin(mth), np.cos(mth)]]).dot(np.array([t[0], t[1]])) + np.array([mt[0], mt[1]])
-            dx[i] = tmp[0]
-            dy[i] = tmp[1]
-            th[i] = theta + mth
-            discardFrames[i] = d
+            if(len(xvec[selectedFrames[i]].ravel()) != 0):
+                print(i," ", xvec[selectedFrames[i]].ravel())
+                theta, t, d = alignFrames(refVectorX, refVectorY, refTriangles, config.topMatchesMonoAlign, xvec[selectedFrames[i]].ravel(), yvec[selectedFrames[i]].ravel())
+                tmp = np.array([[np.cos(mth), -np.sin(mth)], [np.sin(mth), np.cos(mth)]]).dot(np.array([t[0], t[1]])) + np.array([mt[0], mt[1]])
+                dx[i] = tmp[0]
+                dy[i] = tmp[1]
+                th[i] = theta + mth
+                discardFrames[i] = d
+            else:
+                discardFrames[i] = 1
 
         dx = dx[discardFrames == 0]
         dy = dy[discardFrames == 0]
