@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from scipy.io import loadmat, savemat
 from skimage.measure import regionprops, label as lbl
 from time import time, process_time
-from tkinter import Tk, IntVar, DoubleVar, StringVar, Scale, Radiobutton, Button, Label, HORIZONTAL, filedialog
+from tkinter import Tk, IntVar, DoubleVar, StringVar, Scale, Radiobutton, Button, Label, HORIZONTAL, filedialog, Text, END
 
 
 class Config:  
@@ -182,7 +182,6 @@ def readImages(config):
             stars.append(len(starMatrix))
 
             if len(starMatrix) > 5:
-
                 corrMatrix = starMatrix[np.argsort(starMatrix[:, 4])][::-1]
                 corrMatrix = corrMatrix.T
         
@@ -196,8 +195,11 @@ def readImages(config):
                 yvec[n] = []
 
             if n % 10 == 0:
-                print("Reading", f'{len(lightFrameArray)}', "lights: {}%".format(int(100*n/(len(lightFrameArray)-1))), end=" ", flush=True)
-                print("\r", end='')
+                Tx.delete("1.0", END)
+                Tx.insert("1.0", "Reading" + " " + f'{len(lightFrameArray)}' + " " + "lights: {}%".format(int(100*n/(len(lightFrameArray)-1))))
+                Tx.update()
+                #print("Reading", f'{len(lightFrameArray)}', "lights: {}%".format(int(100*n/(len(lightFrameArray)-1))), end=" ", flush=True)
+                #print("\r", end='')
     
         qual = [s/max(stars) for s in stars]
         q = qual.index(max(qual))
@@ -499,5 +501,9 @@ B2 = Button(text="Select base path", command=selectPathButton).grid(row=0, colum
 Label(master=win,textvariable=pathString).grid(row=1, column=5)
 g0 = Radiobutton(win, text="Read PNG", variable=lightInputFormatSelector, value=0).grid(row=2, column=5, sticky='w')
 g1 = Radiobutton(win, text="Read TIF", variable=lightInputFormatSelector, value=1).grid(row=3, column=5, sticky='w')
+Tx = Text(win, height = 5, width = 25)
+
+Tx.grid(row=5, column=0, sticky='w')
+
 
 win.mainloop()
