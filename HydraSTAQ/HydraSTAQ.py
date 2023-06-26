@@ -1,4 +1,3 @@
-from asyncio.windows_events import NULL
 import os
 import numpy as np
 from cv2 import medianBlur, imread, imwrite, warpAffine, IMREAD_GRAYSCALE, IMREAD_ANYDEPTH
