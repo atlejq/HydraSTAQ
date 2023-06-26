@@ -227,7 +227,6 @@ def readImages(config):
 def computeOffsets(config):
     start_time = time()
     start_timeP = process_time()
-    print("Computed offsets for", f'{len(selectedFrames)}', "frames", "\n")
 
     xvecPath = os.path.join(config.basePath, config.parameterPath, f'xvec{config.filter}.mat')
     yvecPath = os.path.join(config.basePath, config.parameterPath, f'yvec{config.filter}.mat')
@@ -266,10 +265,11 @@ def computeOffsets(config):
         refTriangles = refTriangles[np.argsort(refTriangles[:, 3])]
         refTrianglesAlign = refTrianglesAlign[np.argsort(refTrianglesAlign[:, 3])]
 
+        print("Computing offsets for", f'{len(selectedFrames)}', "frames", "\n")
+
         mth, mt, bla = alignFrames(refVectorXAlign, refVectorYAlign, refTrianglesAlign, config.topMatchesMasterAlign, refVectorX, refVectorY)
         for i in range(len(selectedFrames)):
             if(len(xvec[selectedFrames[i]].ravel()) != 0):
-                print(i," ", xvec[selectedFrames[i]].ravel())
                 theta, t, d = alignFrames(refVectorX, refVectorY, refTriangles, config.topMatchesMonoAlign, xvec[selectedFrames[i]].ravel(), yvec[selectedFrames[i]].ravel())
                 tmp = np.array([[np.cos(mth), -np.sin(mth)], [np.sin(mth), np.cos(mth)]]).dot(np.array([t[0], t[1]])) + np.array([mt[0], mt[1]])
                 dx[i] = tmp[0]
