@@ -149,7 +149,6 @@ def alignFrames(refVectorX, refVectorY, refTriangles, topMatches, xvec, yvec):
         theta, t = findRT(frameMatrix, referenceMatrix)
         d = 0
     else:
-        print('Cannot stack frame')
         theta = 0
         t = np.zeros((2, 1))
         d = 1
@@ -195,11 +194,8 @@ def readImages(config):
                 yvec[n] = []
 
             if n % 10 == 0:
-                Tx.delete("1.0", END)
-                Tx.insert("1.0", "Reading" + " " + f'{len(lightFrameArray)}' + " " + "lights: {}%".format(int(100*n/(len(lightFrameArray)-1))))
-                Tx.update()
-                #print("Reading", f'{len(lightFrameArray)}', "lights: {}%".format(int(100*n/(len(lightFrameArray)-1))), end=" ", flush=True)
-                #print("\r", end='')
+                outString.set("Reading" + " " + f'{len(lightFrameArray)}' + " " + "lights: {}%".format(int(100*n/(len(lightFrameArray)-1))))
+                win.update_idletasks()
     
         qual = [s/max(stars) for s in stars]
         q = qual.index(max(qual))
@@ -211,9 +207,7 @@ def readImages(config):
 
         end_time = time()
         end_timeP = process_time()
-        print("\n")
-        print("Elapsed time:", f'{end_time - start_time:.4f}') 
-        print("Elapsed CPU time:", f'{end_timeP - start_timeP:.4f}', "\n") 
+        outString.set("Elapsed time:" + " " + f'{end_time - start_time:.2f}' + " " + "CPU time:" + " " + f'{end_timeP - start_timeP:.2f}') 
 
         if not os.path.isdir(os.path.join(config.basePath, config.parameterPath)): os.makedirs(os.path.join(config.basePath, config.parameterPath))         
 
@@ -223,7 +217,7 @@ def readImages(config):
         savemat(os.path.join(config.basePath, config.parameterPath, f'maxQualFramePath{config.filter}.mat'), {'maxQualFramePath': maxQualFramePath})
         savemat(os.path.join(config.basePath, config.parameterPath, f'refVector{config.filter}.mat'), {'refVector': refVector})
     else:
-        print("No image files found.")
+        outString.set("No image files found.")
 
 
 def computeOffsets(config):
@@ -267,7 +261,8 @@ def computeOffsets(config):
         refTriangles = refTriangles[np.argsort(refTriangles[:, 3])]
         refTrianglesAlign = refTrianglesAlign[np.argsort(refTrianglesAlign[:, 3])]
 
-        print("Computing offsets for", f'{len(selectedFrames)}', "frames", "\n")
+        outString.set("Computing offsets for" + " " + f'{len(selectedFrames)}' + " " + "frames")
+        win.update_idletasks()
 
         mth, mt, bla = alignFrames(refVectorXAlign, refVectorYAlign, refTrianglesAlign, config.topMatchesMasterAlign, refVectorX, refVectorY)
         for i in range(len(selectedFrames)):
@@ -292,8 +287,7 @@ def computeOffsets(config):
         end_time = time()
         end_timeP = process_time()
     
-        print("Elapsed time:", f'{end_time - start_time:.4f}') 
-        print("Elapsed CPU time:", f'{end_timeP - start_timeP:.4f}', "\n") 
+        outString.set("Elapsed time:" + " " + f'{end_time - start_time:.2f}' + " " + "CPU time:" + " " + f'{end_timeP - start_timeP:.2f}') 
 
         plt.figure(1)
         plt.imshow(maxQualFrame, cmap='gray', vmin = 0, vmax = (255**maxQualFrame.dtype.itemsize))
@@ -327,7 +321,7 @@ def computeOffsets(config):
         offsets = np.array([dx, dy, th, selectedFrames]).T
         savemat(os.path.join(config.basePath, config.parameterPath,  f'offsets{config.filter}.mat'), {'offsets': offsets})
     else:
-        print("Missing input files.", "\n")
+        outString.Set("Missing input files.")
 
 
 def stackImages(config):  
@@ -351,23 +345,22 @@ def stackImages(config):
         darkPath = config.darkPathH if config.filter == "H" else config.darkPathRGB
 
         if(os.path.isfile(os.path.join(config.basePath, darkPath, 'MasterDarkFrame.tif'))):
-            print("Loading master dark frame")
+            outString.set("Loading master dark frame")
+            win.update_idletasks()
             darkFrame = imread(os.path.join(config.basePath, darkPath, 'MasterDarkFrame.tif'), flags=(IMREAD_GRAYSCALE | IMREAD_ANYDEPTH))  
             darkFrame = darkFrame.astype(np.float32)      
         else:
             darkFrameArray = getCalibrationFrames(config, darkPath, ".png")  
             darkFrame = np.zeros(((1+config.ROI_y[1] - config.ROI_y[0]), (1+config.ROI_x[1] - config.ROI_x[0])), dtype=np.float32)
             for k in range(len(darkFrameArray)):
-                print("Stacking", f'{len(darkFrameArray)}', "darks: {}%".format(int(100*k/(len(darkFrameArray)-1))), end=" ", flush=True)
-                print("\r", end='')
+                outString.set("Stacking" + " " + f'{len(darkFrameArray)}' + " " + "darks: {}%".format(int(100*k/(len(darkFrameArray)-1))))
+                win.update_idletasks()
                 tmpFrame = np.asarray(imread(darkFrameArray[k],IMREAD_GRAYSCALE))
                 tmpFrame = tmpFrame[config.ROI_y[0]-1:config.ROI_y[1], config.ROI_x[0]-1:config.ROI_x[1]]
                 tmpFrame = tmpFrame.astype(np.float32)/(255**tmpFrame.dtype.itemsize)
                 darkFrame = darkFrame+tmpFrame/len(darkFrameArray)
          
             imwrite(os.path.join(config.basePath, darkPath, 'MasterDarkFrame.tif'),darkFrame)
-
-        print("\n")
 
         stackFrame = np.zeros(((1+config.ROI_y[1] - config.ROI_y[0]), (1+config.ROI_x[1] - config.ROI_x[0])), dtype=np.float32)
         temparray = np.zeros(((1+config.ROI_y[1] - config.ROI_y[0]), (1+config.ROI_x[1] - config.ROI_x[0]), config.medianOver), dtype=np.float32)
@@ -390,17 +383,16 @@ def stackImages(config):
 
             tempcount += 1
             if (((k+1) % config.medianOver) == 0):
-                print("Stacking", f'{len(selectedFrames)}', "lights: {}%".format(int(100*k/(len(selectedFrames)-1))), end=" ", flush=True)
-                print("\r", end='')
+                outString.set("Stacking" + " " + f'{len(selectedFrames)}' + " " + "lights: {}%".format(int(100*k/(len(selectedFrames)-1))))
+                win.update_idletasks()
                 stackFrame = stackFrame + np.median(temparray,axis=2)/(len(selectedFrames)//config.medianOver);
                 temparray = np.zeros(((1+config.ROI_y[1] - config.ROI_y[0]), (1+config.ROI_x[1] - config.ROI_x[0]), config.medianOver), dtype=np.float32)
                 tempcount = 1;
 
         end_time = time()
         end_timeP = process_time()
-        print("\n")
-        print("Elapsed time:", f'{end_time - start_time:.4f}') 
-        print("Elapsed CPU time:", f'{end_timeP - start_timeP:.4f}', "\n") 
+
+        outString.set("Elapsed time:" + " " + f'{end_time - start_time:.2f}' + " " + "CPU time:" + " " + f'{end_timeP - start_timeP:.2f}') 
 
         if not os.path.isdir(os.path.join(config.basePath, config.outputPath)): os.makedirs(os.path.join(config.basePath, config.outputPath))  
         imwrite(os.path.join(config.basePath, config.outputPath, f'{len(selectedFrames)}_{config.filter}.tif'), stackFrame)
@@ -410,12 +402,12 @@ def stackImages(config):
         plt.axis('off')
         plt.show()
     else:
-        print("Missing input files.", "\n")
+        outString.set("Missing input files.")
 
 
 def selectMethod():
    if config.basePath == "":
-        print("Please enter a valid directory.")
+        outString.set("Please enter a valid directory.")
    else:
         filterTuple = ("L","R","G","B","H")
         alignTuple = ("L","R","G","B","H")
@@ -448,6 +440,7 @@ def selectPathButton():
 
 
 win = Tk()
+win.geometry("750x200")
 win.title("HydraSTAQ")
 config = Config()
 
@@ -466,6 +459,7 @@ v3 = DoubleVar()
 v4 = DoubleVar()
 
 pathString = StringVar()
+outString = StringVar()
 
 t0 = Radiobutton(win, text="Read images", variable=todoSelector, value=0).grid(row=0, sticky='w')
 t1 = Radiobutton(win, text="Compute offsets", variable=todoSelector, value=1).grid(row=1, sticky='w')
@@ -497,13 +491,11 @@ a2 = Radiobutton(win, text="Align by G", variable=alignSelector, value=2).grid(r
 a3 = Radiobutton(win, text="Align by B", variable=alignSelector, value=3).grid(row=3, column=4, sticky='w')
 a3 = Radiobutton(win, text="Align by Ha", variable=alignSelector, value=4).grid(row=4, column=4, sticky='w')
 
-B2 = Button(text="Select base path", command=selectPathButton).grid(row=0, column=5)
-Label(master=win,textvariable=pathString).grid(row=1, column=5)
+B2 = Button(text="Select base path", command=selectPathButton).grid(row=0, column=5, sticky='w')
+Label(master=win,textvariable=pathString).grid(row=1, column=5, sticky='w')
 g0 = Radiobutton(win, text="Read PNG", variable=lightInputFormatSelector, value=0).grid(row=2, column=5, sticky='w')
 g1 = Radiobutton(win, text="Read TIF", variable=lightInputFormatSelector, value=1).grid(row=3, column=5, sticky='w')
-Tx = Text(win, height = 5, width = 25)
-
-Tx.grid(row=5, column=0, sticky='w')
+Label(master=win,textvariable=outString, fg='#f00').grid(row=4, column=5, sticky='w')
 
 
 win.mainloop()
