@@ -287,7 +287,9 @@ def computeOffsets(config):
         end_time = time()
         end_timeP = process_time()
     
-        outString.set("Elapsed time:" + " " + f'{end_time - start_time:.2f}' + " " + "CPU time:" + " " + f'{end_timeP - start_timeP:.2f}') 
+        outString.set("Elapsed time:" + " " + f'{end_time - start_time:.2f}' + " " + "CPU time:" + " " + f'{end_timeP - start_timeP:.2f}')
+        
+        offsets = np.array([dx, dy, th, selectedFrames]).T
         savemat(os.path.join(config.basePath, config.parameterPath, f'offsets{config.filter}.mat'), {'offsets': offsets})
 
         plt.figure(1)
@@ -318,8 +320,6 @@ def computeOffsets(config):
         ax2.plot(background[selectedFrames]/np.max(background[selectedFrames]))
         ax2.legend(['Quality', 'Background'])
         plt.show()
-
-        offsets = np.array([dx, dy, th, selectedFrames]).T
     else:
         outString.Set("Missing input files.")
 
