@@ -323,7 +323,7 @@ def computeOffsets(config):
             ax2.legend(['Quality', 'Background'])
             plt.show()
         else:
-            outString.Set("Reference frame align failure.")
+            outString.Set("Filter align failure.")
     else:
         outString.Set("Missing input files.")
 
