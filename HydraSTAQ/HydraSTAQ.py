@@ -264,62 +264,66 @@ def computeOffsets(config):
         outString.set("Computing offsets for" + " " + f'{len(selectedFrames)}' + " " + "frames")
         win.update_idletasks()
 
-        mth, mt, bla = alignFrames(refVectorXAlign, refVectorYAlign, refTrianglesAlign, config.topMatchesMasterAlign, refVectorX, refVectorY)
-        for i in range(len(selectedFrames)):
-            if(len(xvec[selectedFrames[i]].ravel()) != 0):
-                theta, t, d = alignFrames(refVectorX, refVectorY, refTriangles, config.topMatchesMonoAlign, xvec[selectedFrames[i]].ravel(), yvec[selectedFrames[i]].ravel())
-                tmp = np.array([[np.cos(mth), -np.sin(mth)], [np.sin(mth), np.cos(mth)]]).dot(np.array([t[0], t[1]])) + np.array([mt[0], mt[1]])
-                dx[i] = tmp[0]
-                dy[i] = tmp[1]
-                th[i] = theta + mth
-                discardFrames[i] = d
-            else:
-                discardFrames[i] = 1
-
-        dx = dx[discardFrames == 0]
-        dy = dy[discardFrames == 0]
-        th = th[discardFrames == 0]
-        selectedFrames = selectedFrames[discardFrames == 0]
-
-        maxQualFrame = np.asarray(imread(maxQualFramePath[0], IMREAD_GRAYSCALE))
-        maxQualFrame = maxQualFrame[config.ROI_y[0]-1:config.ROI_y[1], config.ROI_x[0]-1:config.ROI_x[1]]
-
-        end_time = time()
-        end_timeP = process_time()
-    
-        outString.set("Elapsed time:" + " " + f'{end_time - start_time:.2f}' + " " + "CPU time:" + " " + f'{end_timeP - start_timeP:.2f}')
+        mth, mt, d = alignFrames(refVectorXAlign, refVectorYAlign, refTrianglesAlign, config.topMatchesMasterAlign, refVectorX, refVectorY)
         
-        offsets = np.array([dx, dy, th, selectedFrames]).T
-        savemat(os.path.join(config.basePath, config.parameterPath, f'offsets{config.filter}.mat'), {'offsets': offsets})
+        if(d==0):
+            for i in range(len(selectedFrames)):
+                if(len(xvec[selectedFrames[i]].ravel()) != 0):
+                    theta, t, d = alignFrames(refVectorX, refVectorY, refTriangles, config.topMatchesMonoAlign, xvec[selectedFrames[i]].ravel(), yvec[selectedFrames[i]].ravel())
+                    tmp = np.array([[np.cos(mth), -np.sin(mth)], [np.sin(mth), np.cos(mth)]]).dot(np.array([t[0], t[1]])) + np.array([mt[0], mt[1]])
+                    dx[i] = tmp[0]
+                    dy[i] = tmp[1]
+                    th[i] = theta + mth
+                    discardFrames[i] = d
+                else:
+                    discardFrames[i] = 1
 
-        plt.figure(1)
-        plt.imshow(maxQualFrame, cmap='gray', vmin = 0, vmax = (255**maxQualFrame.dtype.itemsize))
-        plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0, hspace = 0, wspace = 0)
-        plt.axis('off')
-        plt.scatter(refVectorXAlign, refVectorYAlign, s=100, facecolors='none', edgecolors='r')
+            dx = dx[discardFrames == 0]
+            dy = dy[discardFrames == 0]
+            th = th[discardFrames == 0]
+            selectedFrames = selectedFrames[discardFrames == 0]
 
-        for i in range(len(selectedFrames)):
-            R = np.array([[np.cos(th[i]), -np.sin(th[i])], [np.sin(th[i]), np.cos(th[i])]])
-            t = np.array([dx[i], dy[i]])
-            debugMatrix = R.dot(np.array([xvec[selectedFrames[i]].ravel(), yvec[selectedFrames[i]].ravel()])) + np.repeat(t[:, np.newaxis], len(xvec[selectedFrames[i]].ravel()), axis=1)
-            debugMatrix = debugMatrix[:,debugMatrix.min(axis=0)>=0]
-            plt.scatter(debugMatrix[0, :], debugMatrix[1, :], s=60, facecolors='none', edgecolors='g')
+            maxQualFrame = np.asarray(imread(maxQualFramePath[0], IMREAD_GRAYSCALE))
+            maxQualFrame = maxQualFrame[config.ROI_y[0]-1:config.ROI_y[1], config.ROI_x[0]-1:config.ROI_x[1]]
 
-        plt.show()
+            end_time = time()
+            end_timeP = process_time()
+    
+            outString.set("Elapsed time:" + " " + f'{end_time - start_time:.2f}' + " " + "CPU time:" + " " + f'{end_timeP - start_timeP:.2f}')
+        
+            offsets = np.array([dx, dy, th, selectedFrames]).T
+            savemat(os.path.join(config.basePath, config.parameterPath, f'offsets{config.filter}.mat'), {'offsets': offsets})
+    
+            plt.figure(1)
+            plt.imshow(maxQualFrame, cmap='gray', vmin = 0, vmax = (255**maxQualFrame.dtype.itemsize))
+            plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0, hspace = 0, wspace = 0)
+            plt.axis('off')
+            plt.scatter(refVectorXAlign, refVectorYAlign, s=100, facecolors='none', edgecolors='r')
 
-        plt.figure(5)
-        plt.plot(th)
-        plt.show()
+            for i in range(len(selectedFrames)):
+                R = np.array([[np.cos(th[i]), -np.sin(th[i])], [np.sin(th[i]), np.cos(th[i])]])
+                t = np.array([dx[i], dy[i]])
+                debugMatrix = R.dot(np.array([xvec[selectedFrames[i]].ravel(), yvec[selectedFrames[i]].ravel()])) + np.repeat(t[:, np.newaxis], len(xvec[selectedFrames[i]].ravel()), axis=1)
+                debugMatrix = debugMatrix[:,debugMatrix.min(axis=0)>=0]
+                plt.scatter(debugMatrix[0, :], debugMatrix[1, :], s=60, facecolors='none', edgecolors='g')
 
-        fig, (ax1, ax2)  = plt.subplots(1, 2, sharey='row')  
-        ax1.plot(qual)
-        ax1.plot(background/np.max(background))
-        ax1.legend(['Quality', 'Background'])
+            plt.show()
+
+            plt.figure(5)
+            plt.plot(th)
+            plt.show()
+
+            fig, (ax1, ax2)  = plt.subplots(1, 2, sharey='row')  
+            ax1.plot(qual)
+            ax1.plot(background/np.max(background))
+            ax1.legend(['Quality', 'Background'])
   
-        ax2.plot(qual[selectedFrames])
-        ax2.plot(background[selectedFrames]/np.max(background[selectedFrames]))
-        ax2.legend(['Quality', 'Background'])
-        plt.show()
+            ax2.plot(qual[selectedFrames])
+            ax2.plot(background[selectedFrames]/np.max(background[selectedFrames]))
+            ax2.legend(['Quality', 'Background'])
+            plt.show()
+        else:
+            outString.Set("Reference frame align failure.")
     else:
         outString.Set("Missing input files.")
 
@@ -466,7 +470,7 @@ Radiobutton(win, text="Read images", variable=todoSelector, value=0).grid(row=0,
 Radiobutton(win, text="Compute offsets", variable=todoSelector, value=1).grid(row=1, sticky='w')
 Radiobutton(win, text="Stack images", variable=todoSelector, value=2).grid(row=2, sticky='w')
 Button(win, text ="Execute", command = selectMethod).grid(row=3)
-Label(text="Make a choice").grid(row=4, sticky='w')
+Label(text="Make a choice").grid(row=4)
 
 Label(win, text="Max stars").grid(row=0, column=1)
 Label(win, text="Discard percentage").grid(row=1, column=1)
