@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from scipy.io import loadmat, savemat
 from skimage.measure import regionprops, label as lbl
 from time import time, process_time
-from tkinter import Tk, IntVar, DoubleVar, StringVar, Scale, Radiobutton, Button, Label, HORIZONTAL, filedialog, Text, END
+from tkinter import Tk, IntVar, DoubleVar, StringVar, Scale, Radiobutton, Button, Label, HORIZONTAL, filedialog
 
 
 class Config:  
@@ -107,7 +107,7 @@ def findRT(A, B):
         V[:, 1] = V[:, 1] * -1
         R = np.dot(V, U.T)
 
-    theta = np.arcsin(R[1, 0])
+    theta = np.arctan2(R[1,0], R[0,0])   #np.arcsin(R[1, 0])
     t = -np.dot(R, centroid_A) + centroid_B
 
     return theta, t
@@ -319,7 +319,7 @@ def computeOffsets(config):
         plt.show()
 
         offsets = np.array([dx, dy, th, selectedFrames]).T
-        savemat(os.path.join(config.basePath, config.parameterPath,  f'offsets{config.filter}.mat'), {'offsets': offsets})
+        savemat(os.path.join(config.basePath, config.parameterPath, f'offsets{config.filter}.mat'), {'offsets': offsets})
     else:
         outString.Set("Missing input files.")
 
@@ -430,7 +430,7 @@ def selectMethod():
             config.medianOver=s4.get()
             stackImages(config)
 
-def selectPathButton():
+def selectPath():
     basePathName = filedialog.askdirectory()
     pathString.set(basePathName)
     config.basePath = basePathName
@@ -440,7 +440,8 @@ def selectPathButton():
 
 
 win = Tk()
-win.geometry("750x200")
+
+win.geometry("750x220")
 win.title("HydraSTAQ")
 config = Config()
 
@@ -458,15 +459,14 @@ v2 = DoubleVar()
 v3 = DoubleVar()
 v4 = DoubleVar()
 
-
 pathString = StringVar()
 outString = StringVar()
 
 Radiobutton(win, text="Read images", variable=todoSelector, value=0).grid(row=0, sticky='w')
 Radiobutton(win, text="Compute offsets", variable=todoSelector, value=1).grid(row=1, sticky='w')
-Radiobutton(win, text="Stack images", variable=todoSelector, value=2).grid(row=2,  sticky='w')
-Button(win, text ="Execute", command = selectMethod).grid(row=3)
-Label(text="Make a choice").grid(row=4)
+Radiobutton(win, text="Stack images", variable=todoSelector, value=2).grid(row=2, sticky='w')
+Button(win, text ="Execute", command = selectMethod).grid(row=3, sticky='w')
+Label(text="Make a choice").grid(row=4, sticky='w')
 
 Label(win, text="Max stars").grid(row=0, column=1)
 Label(win, text="Discard percentage").grid(row=1, column=1)
@@ -474,7 +474,7 @@ Label(win, text="Ref. align stars").grid(row=2, column=1)
 Label(win, text="Align stars").grid(row=3, column=1)
 Label(win, text="Median over").grid(row=4, column=1)
 
-s0 = Scale(win, variable = v0, from_ = 5, to = 15, orient = HORIZONTAL).grid(row=0, column=2); s0.set(15)
+s0 = Scale(win, variable = v0, from_ = 5, to = 15, orient = HORIZONTAL); s0.grid(row=0, column=2); s0.set(15)
 s1 = Scale(win, variable = v1, from_ = 0, to = 99, orient = HORIZONTAL); s1.grid(row=1, column=2); s1.set(10)
 s2 = Scale(win, variable = v2, from_ = 4, to = 8, orient = HORIZONTAL); s2.grid(row=2, column=2); s2.set(6)
 s3 = Scale(win, variable = v3, from_ = 4, to = 8, orient = HORIZONTAL); s3.grid(row=3, column=2); s3.set(6)
@@ -492,10 +492,10 @@ Radiobutton(win, text="Align by G", variable=alignSelector, value=2).grid(row=2,
 Radiobutton(win, text="Align by B", variable=alignSelector, value=3).grid(row=3, column=4, sticky='w')
 Radiobutton(win, text="Align by Ha", variable=alignSelector, value=4).grid(row=4, column=4, sticky='w')
 
-Button(text="Select base path", command=selectPathButton).grid(row=0, column=5, sticky='w')
-Label(master=win,textvariable=pathString).grid(row=1, column=5, sticky='w')
+Button(text="Select base path", command=selectPath).grid(row=0, column=5, sticky='w')
+Label(master=win, textvariable=pathString).grid(row=1, column=5, sticky='w')
 Radiobutton(win, text="Read PNG", variable=lightInputFormatSelector, value=0).grid(row=2, column=5, sticky='w')
 Radiobutton(win, text="Read TIF", variable=lightInputFormatSelector, value=1).grid(row=3, column=5, sticky='w')
-Label(master=win,textvariable=outString, fg='#f00').grid(row=4, column=5, sticky='w')
+Label(master=win, textvariable=outString, fg='#f00').grid(row=4, column=5, sticky='w')
 
 win.mainloop()
