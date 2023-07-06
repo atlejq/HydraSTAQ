@@ -107,7 +107,7 @@ def findRT(A, B):
         V[:, 1] = V[:, 1] * -1
         R = np.dot(V, U.T)
 
-    theta = np.arctan2(R[1,0], R[0,0])   #np.arcsin(R[1, 0])
+    theta = np.arctan2(R[1,0], R[0,0])
     t = -np.dot(R, centroid_A) + centroid_B
 
     return theta, t
@@ -288,6 +288,7 @@ def computeOffsets(config):
         end_timeP = process_time()
     
         outString.set("Elapsed time:" + " " + f'{end_time - start_time:.2f}' + " " + "CPU time:" + " " + f'{end_timeP - start_timeP:.2f}') 
+        savemat(os.path.join(config.basePath, config.parameterPath, f'offsets{config.filter}.mat'), {'offsets': offsets})
 
         plt.figure(1)
         plt.imshow(maxQualFrame, cmap='gray', vmin = 0, vmax = (255**maxQualFrame.dtype.itemsize))
@@ -319,7 +320,6 @@ def computeOffsets(config):
         plt.show()
 
         offsets = np.array([dx, dy, th, selectedFrames]).T
-        savemat(os.path.join(config.basePath, config.parameterPath, f'offsets{config.filter}.mat'), {'offsets': offsets})
     else:
         outString.Set("Missing input files.")
 
@@ -465,7 +465,7 @@ outString = StringVar()
 Radiobutton(win, text="Read images", variable=todoSelector, value=0).grid(row=0, sticky='w')
 Radiobutton(win, text="Compute offsets", variable=todoSelector, value=1).grid(row=1, sticky='w')
 Radiobutton(win, text="Stack images", variable=todoSelector, value=2).grid(row=2, sticky='w')
-Button(win, text ="Execute", command = selectMethod).grid(row=3, sticky='w')
+Button(win, text ="Execute", command = selectMethod).grid(row=3)
 Label(text="Make a choice").grid(row=4, sticky='w')
 
 Label(win, text="Max stars").grid(row=0, column=1)
