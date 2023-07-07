@@ -116,7 +116,7 @@ def createMasterFrame(path, type):
     #Function to create a master calibration frame
     if(os.path.isfile(os.path.join(config.basePath, path, 'Master.tif'))):
         outString.set('Loading master' + ' ' + type + ' ' + 'frame')
-        win.update_idletasks()
+        win.update()
         frame = imread(os.path.join(config.basePath, path, 'Master.tif'), flags=(IMREAD_GRAYSCALE | IMREAD_ANYDEPTH))  
         frame = frame.astype(np.float32)      
     else:
@@ -124,7 +124,7 @@ def createMasterFrame(path, type):
         frame = np.zeros(((1+config.ROI_y[1] - config.ROI_y[0]), (1+config.ROI_x[1] - config.ROI_x[0])), dtype=np.float32)
         for k in range(len(frameArray)):
             outString.set('Stacking' + ' ' + f'{len(frameArray)}' + ' ' + type + 's: {}%'.format(int(100*k/(len(frameArray)-1))))
-            win.update_idletasks()
+            win.update()
             tmpFrame = np.asarray(imread(frameArray[k], IMREAD_GRAYSCALE))
             tmpFrame = tmpFrame[config.ROI_y[0]-1:config.ROI_y[1], config.ROI_x[0]-1:config.ROI_x[1]]
             tmpFrame = tmpFrame.astype(np.float32)/(255**tmpFrame.dtype.itemsize)
@@ -217,7 +217,7 @@ def readImages(config):
 
             if n % 10 == 0:
                 outString.set('Reading' + ' ' + f'{len(lightFrameArray)}' + ' ' + 'lights: {}%'.format(int(100*n/(len(lightFrameArray)-1))))
-                win.update_idletasks()
+                win.update()
     
         qual = [s/max(stars) for s in stars]
         q = qual.index(max(qual))
@@ -285,7 +285,7 @@ def computeOffsets(config):
         refTrianglesAlign = refTrianglesAlign[np.argsort(refTrianglesAlign[:, 3])]
 
         outString.set('Computing offsets for' + ' ' + f'{len(selectedFrames)}' + ' ' + 'frames')
-        win.update_idletasks()
+        win.update()
 
         mth, mt, d = alignFrames(refVectorXAlign, refVectorYAlign, refTrianglesAlign, config.topMatchesMasterAlign, refVectorX, refVectorY)
         
@@ -396,7 +396,7 @@ def stackImages(config):
             tempcount += 1
             if (((k+1) % config.medianOver) == 0):
                 outString.set('Stacking' + ' ' + f'{len(selectedFrames)}' + ' ' + 'lights: {}%'.format(int(100*k/(len(selectedFrames)-1))))
-                win.update_idletasks()
+                win.update()
                 stackFrame = stackFrame + np.median(temparray,axis=2)/(len(selectedFrames)//config.medianOver);
                 temparray = np.zeros(((1+config.ROI_y[1] - config.ROI_y[0]), (1+config.ROI_x[1] - config.ROI_x[0]), config.medianOver), dtype=np.float32)
                 tempcount = 1;
