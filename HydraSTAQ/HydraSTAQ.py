@@ -112,6 +112,7 @@ def findRT(A, B):
 
     return theta, t
 
+
 def createMasterFrame(path, type):
     #Function to create a master calibration frame
     if(os.path.isfile(os.path.join(config.basePath, path, 'Master.tif'))):
@@ -133,6 +134,7 @@ def createMasterFrame(path, type):
         imwrite(os.path.join(config.basePath, path, 'Master.tif'), frame)
 
     return frame
+
 
 def alignFrames(refVectorX, refVectorY, refTriangles, topMatches, xvec, yvec):
     #Function to align the frames with a "vote matrix"
@@ -441,6 +443,7 @@ def selectMethod():
             config.lightInputFormat = lightInputTuple[lightInputFormatSelector.get()]
             config.medianOver=s4.get()
             stackImages(config)
+
 
 def selectPath():
     basePathName = filedialog.askdirectory()
