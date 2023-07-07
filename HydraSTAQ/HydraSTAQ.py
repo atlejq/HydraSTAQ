@@ -12,7 +12,7 @@ from tkinter import Tk, IntVar, DoubleVar, StringVar, Scale, Radiobutton, Button
 class Config:  
     # Configuration class to hold and manage all the configuration parameters.   
     def __init__(self):
-        self.basePath = ""
+        self.basePath = ''
         self.parameterPath = 'parametersPy'
         self.outputPath = 'outPy'
         self.darkPathRGB = 'darks/10minus'
@@ -54,7 +54,7 @@ def getCalibrationFrames(config, frameType, fileFormat):
 
 def analyzeStarField(lightFrame, config):
     #Function to analyze the star field in the given light frame.
-    if config.filter == "H":
+    if config.filter == 'H':
         threshold = 0.44
         factor = 3
     else:
@@ -115,15 +115,15 @@ def findRT(A, B):
 def createMasterFrame(path, type):
     #Function to create a master calibration frame
     if(os.path.isfile(os.path.join(config.basePath, path, 'Master.tif'))):
-        outString.set("Loading master" + " " + type + " " + "frame")
+        outString.set('Loading master' + ' ' + type + ' ' + 'frame')
         win.update_idletasks()
         frame = imread(os.path.join(config.basePath, path, 'Master.tif'), flags=(IMREAD_GRAYSCALE | IMREAD_ANYDEPTH))  
         frame = frame.astype(np.float32)      
     else:
-        frameArray = getCalibrationFrames(config, path, ".png")  
+        frameArray = getCalibrationFrames(config, path, '.png')  
         frame = np.zeros(((1+config.ROI_y[1] - config.ROI_y[0]), (1+config.ROI_x[1] - config.ROI_x[0])), dtype=np.float32)
         for k in range(len(frameArray)):
-            outString.set("Stacking" + " " + f'{len(frameArray)}' + " " + type + "s: {}%".format(int(100*k/(len(frameArray)-1))))
+            outString.set('Stacking' + ' ' + f'{len(frameArray)}' + " " + type + 's: {}%'.format(int(100*k/(len(frameArray)-1))))
             win.update_idletasks()
             tmpFrame = np.asarray(imread(frameArray[k], IMREAD_GRAYSCALE))
             tmpFrame = tmpFrame[config.ROI_y[0]-1:config.ROI_y[1], config.ROI_x[0]-1:config.ROI_x[1]]
@@ -216,7 +216,7 @@ def readImages(config):
                 yvec[n] = []
 
             if n % 10 == 0:
-                outString.set("Reading" + " " + f'{len(lightFrameArray)}' + " " + "lights: {}%".format(int(100*n/(len(lightFrameArray)-1))))
+                outString.set('Reading' + ' ' + f'{len(lightFrameArray)}' + ' ' + 'lights: {}%'.format(int(100*n/(len(lightFrameArray)-1))))
                 win.update_idletasks()
     
         qual = [s/max(stars) for s in stars]
@@ -229,7 +229,7 @@ def readImages(config):
 
         end_time = time()
         end_timeP = process_time()
-        outString.set("Elapsed time:" + " " + f'{end_time - start_time:.2f}' + " " + "CPU time:" + " " + f'{end_timeP - start_timeP:.2f}') 
+        outString.set('Elapsed time:' + ' ' + f'{end_time - start_time:.2f}' + ' ' + 'CPU time:' + ' ' + f'{end_timeP - start_timeP:.2f}') 
 
         if not os.path.isdir(os.path.join(config.basePath, config.parameterPath)): os.makedirs(os.path.join(config.basePath, config.parameterPath))         
 
@@ -239,7 +239,7 @@ def readImages(config):
         savemat(os.path.join(config.basePath, config.parameterPath, f'maxQualFramePath{config.filter}.mat'), {'maxQualFramePath': maxQualFramePath})
         savemat(os.path.join(config.basePath, config.parameterPath, f'refVector{config.filter}.mat'), {'refVector': refVector})
     else:
-        outString.set("No image files found.")
+        outString.set('No image files found.')
 
 
 def computeOffsets(config):
@@ -284,7 +284,7 @@ def computeOffsets(config):
         refTriangles = refTriangles[np.argsort(refTriangles[:, 3])]
         refTrianglesAlign = refTrianglesAlign[np.argsort(refTrianglesAlign[:, 3])]
 
-        outString.set("Computing offsets for" + " " + f'{len(selectedFrames)}' + " " + "frames")
+        outString.set('Computing offsets for' + ' ' + f'{len(selectedFrames)}' + ' ' + 'frames')
         win.update_idletasks()
 
         mth, mt, d = alignFrames(refVectorXAlign, refVectorYAlign, refTrianglesAlign, config.topMatchesMasterAlign, refVectorX, refVectorY)
@@ -312,7 +312,7 @@ def computeOffsets(config):
             end_time = time()
             end_timeP = process_time()
     
-            outString.set("Elapsed time:" + " " + f'{end_time - start_time:.2f}' + " " + "CPU time:" + " " + f'{end_timeP - start_timeP:.2f}')
+            outString.set('Elapsed time:' + ' ' + f'{end_time - start_time:.2f}' + ' ' + 'CPU time:' + ' ' + f'{end_timeP - start_timeP:.2f}')
         
             offsets = np.array([dx, dy, th, selectedFrames]).T
             savemat(os.path.join(config.basePath, config.parameterPath, f'offsets{config.filter}.mat'), {'offsets': offsets})
@@ -346,9 +346,9 @@ def computeOffsets(config):
             ax2.legend(['Quality', 'Background'])
             plt.show()
         else:
-            outString.Set("Filter align failure.")
+            outString.Set('Filter align failure.')
     else:
-        outString.Set("Missing input files.")
+        outString.Set('Missing input files.')
 
 
 def stackImages(config):  
@@ -395,7 +395,7 @@ def stackImages(config):
 
             tempcount += 1
             if (((k+1) % config.medianOver) == 0):
-                outString.set("Stacking" + " " + f'{len(selectedFrames)}' + " " + "lights: {}%".format(int(100*k/(len(selectedFrames)-1))))
+                outString.set('Stacking' + " " + f'{len(selectedFrames)}' + ' ' + 'lights: {}%'.format(int(100*k/(len(selectedFrames)-1))))
                 win.update_idletasks()
                 stackFrame = stackFrame + np.median(temparray,axis=2)/(len(selectedFrames)//config.medianOver);
                 temparray = np.zeros(((1+config.ROI_y[1] - config.ROI_y[0]), (1+config.ROI_x[1] - config.ROI_x[0]), config.medianOver), dtype=np.float32)
@@ -404,7 +404,7 @@ def stackImages(config):
         end_time = time()
         end_timeP = process_time()
 
-        outString.set("Elapsed time:" + " " + f'{end_time - start_time:.2f}' + " " + "CPU time:" + " " + f'{end_timeP - start_timeP:.2f}') 
+        outString.set('Elapsed time:' + ' ' + f'{end_time - start_time:.2f}' + ' ' + 'CPU time:' + ' ' + f'{end_timeP - start_timeP:.2f}') 
 
         if not os.path.isdir(os.path.join(config.basePath, config.outputPath)): os.makedirs(os.path.join(config.basePath, config.outputPath))  
         imwrite(os.path.join(config.basePath, config.outputPath, f'{len(selectedFrames)}_{config.filter}.tif'), stackFrame)
@@ -414,16 +414,16 @@ def stackImages(config):
         plt.axis('off')
         plt.show()
     else:
-        outString.set("Missing input files.")
+        outString.set('Missing input files.')
 
 
 def selectMethod():
-   if config.basePath == "":
-        outString.set("Please enter a valid directory.")
+   if config.basePath == '':
+        outString.set('Please enter a valid directory.')
    else:
-        filterTuple = ("L","R","G","B","H")
-        alignTuple = ("L","R","G","B","H")
-        lightInputTuple = (".png", ".tif")
+        filterTuple = ('L','R','G','B','H')
+        alignTuple = ('L','R','G','B','H')
+        lightInputTuple = ('.png', '.tif')
         if todoSelector.get()==0:
             config.maxStars=s0.get()
             config.filter = filterTuple[filterSelector.get()]
@@ -454,8 +454,8 @@ def selectPath():
 #This is the GUI
 win = Tk()
 
-win.geometry("750x220")
-win.title("HydraSTAQ")
+win.geometry('750x220')
+win.title('HydraSTAQ')
 config = Config()
 
 todoSelector = IntVar()
@@ -475,17 +475,17 @@ v4 = DoubleVar()
 pathString = StringVar()
 outString = StringVar()
 
-Radiobutton(win, text="Read images", variable=todoSelector, value=0).grid(row=0, sticky='w')
-Radiobutton(win, text="Compute offsets", variable=todoSelector, value=1).grid(row=1, sticky='w')
-Radiobutton(win, text="Stack images", variable=todoSelector, value=2).grid(row=2, sticky='w')
-Button(win, text ="Execute", command = selectMethod).grid(row=3)
-Label(text="Make a choice").grid(row=4)
+Radiobutton(win, text='Read images', variable=todoSelector, value=0).grid(row=0, sticky='w')
+Radiobutton(win, text='Compute offsets', variable=todoSelector, value=1).grid(row=1, sticky='w')
+Radiobutton(win, text='Stack images', variable=todoSelector, value=2).grid(row=2, sticky='w')
+Button(win, text ='Execute', command = selectMethod).grid(row=3)
+Label(text='Make a choice').grid(row=4)
 
-Label(win, text="Max stars").grid(row=0, column=1)
-Label(win, text="Discard percentage").grid(row=1, column=1)
-Label(win, text="Ref. align stars").grid(row=2, column=1)
-Label(win, text="Align stars").grid(row=3, column=1)
-Label(win, text="Median over").grid(row=4, column=1)
+Label(win, text='Max stars').grid(row=0, column=1)
+Label(win, text='Discard percentage').grid(row=1, column=1)
+Label(win, text='Ref. align stars').grid(row=2, column=1)
+Label(win, text='Align stars').grid(row=3, column=1)
+Label(win, text='Median over').grid(row=4, column=1)
 
 s0 = Scale(win, variable = v0, from_ = 5, to = 15, orient = HORIZONTAL); s0.grid(row=0, column=2); s0.set(15)
 s1 = Scale(win, variable = v1, from_ = 0, to = 99, orient = HORIZONTAL); s1.grid(row=1, column=2); s1.set(10)
@@ -493,22 +493,22 @@ s2 = Scale(win, variable = v2, from_ = 4, to = 8, orient = HORIZONTAL); s2.grid(
 s3 = Scale(win, variable = v3, from_ = 4, to = 8, orient = HORIZONTAL); s3.grid(row=3, column=2); s3.set(6)
 s4 = Scale(win, variable = v4, from_ = 10, to = 30, orient = HORIZONTAL); s4.grid(row=4, column=2); s4.set(30)
 
-Radiobutton(win, text="Process L", variable=filterSelector, value=0).grid(row=0, column=3, sticky='w')
-Radiobutton(win, text="Process R", variable=filterSelector, value=1).grid(row=1, column=3, sticky='w')
-Radiobutton(win, text="Process G", variable=filterSelector, value=2).grid(row=2, column=3, sticky='w')
-Radiobutton(win, text="Process B", variable=filterSelector, value=3).grid(row=3, column=3, sticky='w')
-Radiobutton(win, text="Process Ha", variable=filterSelector, value=4).grid(row=4, column=3, sticky='w')
+Radiobutton(win, text='Process L', variable=filterSelector, value=0).grid(row=0, column=3, sticky='w')
+Radiobutton(win, text='Process R', variable=filterSelector, value=1).grid(row=1, column=3, sticky='w')
+Radiobutton(win, text='Process G', variable=filterSelector, value=2).grid(row=2, column=3, sticky='w')
+Radiobutton(win, text='Process B', variable=filterSelector, value=3).grid(row=3, column=3, sticky='w')
+Radiobutton(win, text='Process Ha', variable=filterSelector, value=4).grid(row=4, column=3, sticky='w')
 
-Radiobutton(win, text="Align by L", variable=alignSelector, value=0).grid(row=0, column=4, sticky='w')
-Radiobutton(win, text="Align by R", variable=alignSelector, value=1).grid(row=1, column=4, sticky='w')
-Radiobutton(win, text="Align by G", variable=alignSelector, value=2).grid(row=2, column=4, sticky='w')
-Radiobutton(win, text="Align by B", variable=alignSelector, value=3).grid(row=3, column=4, sticky='w')
-Radiobutton(win, text="Align by Ha", variable=alignSelector, value=4).grid(row=4, column=4, sticky='w')
+Radiobutton(win, text='Align by L', variable=alignSelector, value=0).grid(row=0, column=4, sticky='w')
+Radiobutton(win, text='Align by R', variable=alignSelector, value=1).grid(row=1, column=4, sticky='w')
+Radiobutton(win, text='Align by G', variable=alignSelector, value=2).grid(row=2, column=4, sticky='w')
+Radiobutton(win, text='Align by B', variable=alignSelector, value=3).grid(row=3, column=4, sticky='w')
+Radiobutton(win, text='Align by Ha', variable=alignSelector, value=4).grid(row=4, column=4, sticky='w')
 
-Button(text="Select base path", command=selectPath).grid(row=0, column=5, sticky='w')
+Button(text='Select base path', command=selectPath).grid(row=0, column=5, sticky='w')
 Label(master=win, textvariable=pathString).grid(row=1, column=5, sticky='w')
-Radiobutton(win, text="Read PNG", variable=lightInputFormatSelector, value=0).grid(row=2, column=5, sticky='w')
-Radiobutton(win, text="Read TIF", variable=lightInputFormatSelector, value=1).grid(row=3, column=5, sticky='w')
+Radiobutton(win, text='Read PNG', variable=lightInputFormatSelector, value=0).grid(row=2, column=5, sticky='w')
+Radiobutton(win, text='Read TIF', variable=lightInputFormatSelector, value=1).grid(row=3, column=5, sticky='w')
 Label(master=win, textvariable=outString, fg='#f00').grid(row=4, column=5, sticky='w')
 
 win.mainloop()
