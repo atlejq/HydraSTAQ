@@ -90,7 +90,7 @@ def triangles(x, y):
 
 
 def findRT(A, B):
-    #Find optimal rotation and translation from two sets of points. Cred to Nghia Ho
+    #Function to find optimal rotation and translation from two sets of points. Cred to Nghia Ho
     centroid_A = np.mean(A, axis=1).reshape(-1, 1)
     centroid_B = np.mean(B, axis=1).reshape(-1, 1)
 
@@ -113,6 +113,7 @@ def findRT(A, B):
     return theta, t
 
 def createMasterFrame(path, type):
+    #Function to create a master calibration frame
     if(os.path.isfile(os.path.join(config.basePath, path, 'Master.tif'))):
         outString.set("Loading master" + " " + type + " " + "frame")
         win.update_idletasks()
@@ -134,7 +135,7 @@ def createMasterFrame(path, type):
     return frame
 
 def alignFrames(refVectorX, refVectorY, refTriangles, topMatches, xvec, yvec):
-    #Function that aligns the frames with a "vote matrix"
+    #Function to align the frames with a "vote matrix"
     e = 0.01
     frameTriangles = triangles(xvec, yvec)
     vote = np.zeros((len(refVectorX), len(yvec)))
@@ -177,6 +178,7 @@ def alignFrames(refVectorX, refVectorY, refTriangles, topMatches, xvec, yvec):
 
 
 def readImages(config):
+    #Function to read images
     start_time = time()
     start_timeP = process_time()
 
@@ -241,6 +243,7 @@ def readImages(config):
 
 
 def computeOffsets(config):
+    #Function to compute translational and rotational offsets
     start_time = time()
     start_timeP = process_time()
 
@@ -349,6 +352,7 @@ def computeOffsets(config):
 
 
 def stackImages(config):  
+    #Function to stack and calibrate the images
     start_time = time()
     start_timeP = process_time()
 
@@ -447,6 +451,7 @@ def selectPath():
 ###################################################
 
 
+#This is the GUI
 win = Tk()
 
 win.geometry("750x220")
