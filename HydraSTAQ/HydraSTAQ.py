@@ -78,7 +78,7 @@ def triangles(x, y):
     for i in range(len(x)-2):
         for j in range (i+1, len(x)-1):
             for k in range(j+1, len(x)): 
-                d = [sqrt((x[i]-x[j])**2 +(y[i]-y[j])**2), sqrt((x[j]-x[k])**2 +(y[j]-y[k])**2), sqrt((x[i]-x[k])**2 +(y[i]-y[k])**2)];                        
+                d = [sqrt((x[i]-x[j])**2 + (y[i]-y[j])**2), sqrt((x[j]-x[k])**2 + (y[j]-y[k])**2), sqrt((x[i]-x[k])**2 + (y[i]-y[k])**2)];                        
                 a = sorted(d) 
                 m = len(a)//2
                 u = ((a[m]+a[-m-1])/2)/max(d) #Median calculation trick
@@ -90,7 +90,7 @@ def triangles(x, y):
 
 
 def findRT(A, B):
-    #Function to find optimal rotation and translation from two sets of points. Cred to Nghia Ho
+    #Function to find optimal rotation and translation from two sets of points. Cred to Nghia Ho.
     centroid_A = np.mean(A, axis=1).reshape(-1, 1)
     centroid_B = np.mean(B, axis=1).reshape(-1, 1)
 
@@ -123,7 +123,7 @@ def createMasterFrame(path, type):
         frameArray = getCalibrationFrames(config, path, '.png')  
         frame = np.zeros(((1+config.ROI_y[1] - config.ROI_y[0]), (1+config.ROI_x[1] - config.ROI_x[0])), dtype=np.float32)
         for k in range(len(frameArray)):
-            outString.set('Stacking' + ' ' + f'{len(frameArray)}' + " " + type + 's: {}%'.format(int(100*k/(len(frameArray)-1))))
+            outString.set('Stacking' + ' ' + f'{len(frameArray)}' + ' ' + type + 's: {}%'.format(int(100*k/(len(frameArray)-1))))
             win.update_idletasks()
             tmpFrame = np.asarray(imread(frameArray[k], IMREAD_GRAYSCALE))
             tmpFrame = tmpFrame[config.ROI_y[0]-1:config.ROI_y[1], config.ROI_x[0]-1:config.ROI_x[1]]
@@ -153,7 +153,7 @@ def alignFrames(refVectorX, refVectorY, refTriangles, topMatches, xvec, yvec):
     for row in range(vote.shape[0]):
         maxRowVote = np.max(vote[row, :])
         ind = np.argmax(vote[row, :])
-        cVote[row, ind] = maxRowVote - max(max(np.delete(vote[row, :],ind)),max(np.delete(vote[:, ind],row)))
+        cVote[row, ind] = maxRowVote - max(max(np.delete(vote[row, :], ind)),max(np.delete(vote[:, ind], row)))
 
     cVote = np.maximum(vote, 0)
 
@@ -336,7 +336,7 @@ def computeOffsets(config):
             plt.plot(th)
             plt.show()
 
-            fig, (ax1, ax2)  = plt.subplots(1, 2, sharey='row')  
+            fig, (ax1, ax2) = plt.subplots(1, 2, sharey='row')  
             ax1.plot(qual)
             ax1.plot(background/np.max(background))
             ax1.legend(['Quality', 'Background'])
@@ -370,7 +370,7 @@ def stackImages(config):
         selectedFrames = offsets[:,3].T.astype(int)
         background = qualVector[:,1].T
 
-        darkPath = config.darkPathH if config.filter == "H" else config.darkPathRGB
+        darkPath = config.darkPathH if config.filter == 'H' else config.darkPathRGB
 
         darkFrame = createMasterFrame(darkPath, 'dark')
 
@@ -391,11 +391,11 @@ def stackImages(config):
             lightFrame -= darkFrame
          
             M = np.float32([[np.cos(th[i]), -np.sin(th[i]), dx[i]], [np.sin(th[i]), np.cos(th[i]), dy[i]]])
-            temparray[:, :, tempcount-1] = warpAffine(lightFrame,M,(lightFrame.shape[1], lightFrame.shape[0]))
+            temparray[:, :, tempcount-1] = warpAffine(lightFrame, M, (lightFrame.shape[1], lightFrame.shape[0]))
 
             tempcount += 1
             if (((k+1) % config.medianOver) == 0):
-                outString.set('Stacking' + " " + f'{len(selectedFrames)}' + ' ' + 'lights: {}%'.format(int(100*k/(len(selectedFrames)-1))))
+                outString.set('Stacking' + ' ' + f'{len(selectedFrames)}' + ' ' + 'lights: {}%'.format(int(100*k/(len(selectedFrames)-1))))
                 win.update_idletasks()
                 stackFrame = stackFrame + np.median(temparray,axis=2)/(len(selectedFrames)//config.medianOver);
                 temparray = np.zeros(((1+config.ROI_y[1] - config.ROI_y[0]), (1+config.ROI_x[1] - config.ROI_x[0]), config.medianOver), dtype=np.float32)
