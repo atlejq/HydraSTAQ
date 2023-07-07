@@ -25,8 +25,8 @@ class Config:
         self.topMatchesMasterAlign = int
         self.topMatchesMonoAlign = int
         self.medianOver = int
-        self.ROI_y =  [1, 2822]
-        self.ROI_x =  [1, 4144]
+        self.ROI_y = [1, 2822]
+        self.ROI_x = [1, 4144]
 
 
 def getLights(config, frameType, fileFormat):   
@@ -112,6 +112,26 @@ def findRT(A, B):
 
     return theta, t
 
+def createMasterFrame(path, type):
+    if(os.path.isfile(os.path.join(config.basePath, path, 'Master.tif'))):
+        outString.set("Loading master" + " " + type + " " + "frame")
+        win.update_idletasks()
+        frame = imread(os.path.join(config.basePath, path, 'Master.tif'), flags=(IMREAD_GRAYSCALE | IMREAD_ANYDEPTH))  
+        frame = frame.astype(np.float32)      
+    else:
+        frameArray = getCalibrationFrames(config, path, ".png")  
+        frame = np.zeros(((1+config.ROI_y[1] - config.ROI_y[0]), (1+config.ROI_x[1] - config.ROI_x[0])), dtype=np.float32)
+        for k in range(len(frameArray)):
+            outString.set("Stacking" + " " + f'{len(frameArray)}' + " " + type + "s: {}%".format(int(100*k/(len(frameArray)-1))))
+            win.update_idletasks()
+            tmpFrame = np.asarray(imread(frameArray[k], IMREAD_GRAYSCALE))
+            tmpFrame = tmpFrame[config.ROI_y[0]-1:config.ROI_y[1], config.ROI_x[0]-1:config.ROI_x[1]]
+            tmpFrame = tmpFrame.astype(np.float32)/(255**tmpFrame.dtype.itemsize)
+            frame = frame+tmpFrame/len(frameArray)
+         
+        imwrite(os.path.join(config.basePath, path, 'Master.tif'), frame)
+
+    return frame
 
 def alignFrames(refVectorX, refVectorY, refTriangles, topMatches, xvec, yvec):
     #Function that aligns the frames with a "vote matrix"
@@ -348,23 +368,7 @@ def stackImages(config):
 
         darkPath = config.darkPathH if config.filter == "H" else config.darkPathRGB
 
-        if(os.path.isfile(os.path.join(config.basePath, darkPath, 'MasterDarkFrame.tif'))):
-            outString.set("Loading master dark frame")
-            win.update_idletasks()
-            darkFrame = imread(os.path.join(config.basePath, darkPath, 'MasterDarkFrame.tif'), flags=(IMREAD_GRAYSCALE | IMREAD_ANYDEPTH))  
-            darkFrame = darkFrame.astype(np.float32)      
-        else:
-            darkFrameArray = getCalibrationFrames(config, darkPath, ".png")  
-            darkFrame = np.zeros(((1+config.ROI_y[1] - config.ROI_y[0]), (1+config.ROI_x[1] - config.ROI_x[0])), dtype=np.float32)
-            for k in range(len(darkFrameArray)):
-                outString.set("Stacking" + " " + f'{len(darkFrameArray)}' + " " + "darks: {}%".format(int(100*k/(len(darkFrameArray)-1))))
-                win.update_idletasks()
-                tmpFrame = np.asarray(imread(darkFrameArray[k],IMREAD_GRAYSCALE))
-                tmpFrame = tmpFrame[config.ROI_y[0]-1:config.ROI_y[1], config.ROI_x[0]-1:config.ROI_x[1]]
-                tmpFrame = tmpFrame.astype(np.float32)/(255**tmpFrame.dtype.itemsize)
-                darkFrame = darkFrame+tmpFrame/len(darkFrameArray)
-         
-            imwrite(os.path.join(config.basePath, darkPath, 'MasterDarkFrame.tif'),darkFrame)
+        darkFrame = createMasterFrame(darkPath, 'dark')
 
         stackFrame = np.zeros(((1+config.ROI_y[1] - config.ROI_y[0]), (1+config.ROI_x[1] - config.ROI_x[0])), dtype=np.float32)
         temparray = np.zeros(((1+config.ROI_y[1] - config.ROI_y[0]), (1+config.ROI_x[1] - config.ROI_x[0]), config.medianOver), dtype=np.float32)
@@ -379,7 +383,7 @@ def stackImages(config):
             lightFrame = np.asarray(imread(lightFrameArray[selectedFrames[i]],IMREAD_GRAYSCALE))
             lightFrame = lightFrame[config.ROI_y[0]-1:config.ROI_y[1], config.ROI_x[0]-1:config.ROI_x[1]]
             lightFrame = lightFrame.astype(np.float32)/(255**lightFrame.dtype.itemsize)
-            lightFrame *= max(background[selectedFrames])/background[selectedFrames[i]]
+            lightFrame *= np.mean(background[selectedFrames])/background[selectedFrames[i]]
             lightFrame -= darkFrame
          
             M = np.float32([[np.cos(th[i]), -np.sin(th[i]), dx[i]], [np.sin(th[i]), np.cos(th[i]), dy[i]]])
