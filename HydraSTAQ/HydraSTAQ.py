@@ -14,8 +14,8 @@ class Config:
         self.basePath = ''
         self.parameterPath = 'parametersPy'
         self.outputPath = 'outPy'
-        self.darkPathRGB = 'darks/10minus'
-        self.darkPathH = 'darks/20minus'
+        self.darkPathRGB = 'darks/RGB'
+        self.darkPathNarrowband = 'darks/Narrowband'
         self.lightInputFormat = str
         self.filter = str
         self.align = str
@@ -257,7 +257,6 @@ def computeOffsets(config):
     refVectorAlignPath = os.path.join(config.basePath, config.parameterPath, f'refVector{config.align}.npy')
 
     if(all([os.path.isfile(f) for f in [xvecPath, yvecPath, qualVectorPath, maxQualFrameFilePath, refVectorPath, refVectorAlignPath]])):  
-        print("ok")
         xvec = np.load(xvecPath, allow_pickle = True).ravel() 
         yvec = np.load(yvecPath, allow_pickle = True).ravel() 
         qualVector = np.load(qualVectorPath) 
@@ -373,7 +372,7 @@ def stackImages(config):
         selectedFrames = offsets[:,3].T.astype(int)
         background = qualVector[:,1].T
 
-        darkPath = config.darkPathH if config.filter == 'H' else config.darkPathRGB
+        darkPath = config.darkPathNarrowband if config.filter == 'H' else config.darkPathRGB
 
         darkFrame = createMasterFrame(darkPath, 'dark')
 
