@@ -3,7 +3,6 @@ import numpy as np
 from cv2 import medianBlur, imread, imwrite, warpAffine, IMREAD_GRAYSCALE, IMREAD_ANYDEPTH
 from math import sqrt
 from matplotlib import pyplot as plt
-from scipy.io import loadmat, savemat
 from skimage.measure import regionprops, label as lbl
 from time import time, process_time
 from tkinter import Tk, IntVar, DoubleVar, StringVar, Scale, Radiobutton, Button, Label, HORIZONTAL, filedialog
@@ -227,7 +226,7 @@ def readImages(config):
         qualVector = np.array([qual, background]).T
         refVector = np.array([xvec[q], yvec[q]])
 
-        maxQualFramePath = lightFrameArray[q]
+        maxQualFrameFile = lightFrameArray[q]
 
         end_time = time()
         end_timeP = process_time()
@@ -235,11 +234,12 @@ def readImages(config):
 
         if not os.path.isdir(os.path.join(config.basePath, config.parameterPath)): os.makedirs(os.path.join(config.basePath, config.parameterPath))         
 
-        savemat(os.path.join(config.basePath, config.parameterPath, f'xvec{config.filter}.mat'), {'xvec': xvec})
-        savemat(os.path.join(config.basePath, config.parameterPath, f'yvec{config.filter}.mat'), {'yvec': yvec})
-        savemat(os.path.join(config.basePath, config.parameterPath, f'qualVector{config.filter}.mat'), {'qualVector': qualVector})
-        savemat(os.path.join(config.basePath, config.parameterPath, f'maxQualFramePath{config.filter}.mat'), {'maxQualFramePath': maxQualFramePath})
-        savemat(os.path.join(config.basePath, config.parameterPath, f'refVector{config.filter}.mat'), {'refVector': refVector})
+        np.save(os.path.join(config.basePath, config.parameterPath, f'xvec{config.filter}'), xvec)
+        np.save(os.path.join(config.basePath, config.parameterPath, f'yvec{config.filter}'), yvec)
+        np.save(os.path.join(config.basePath, config.parameterPath, f'qualVector{config.filter}'), qualVector)
+        np.save(os.path.join(config.basePath, config.parameterPath, f'maxQualFrameFile{config.filter}'), maxQualFrameFile)
+        np.save(os.path.join(config.basePath, config.parameterPath, f'refVector{config.filter}'), refVector)
+
     else:
         outString.set('No image files found.')
 
@@ -249,20 +249,21 @@ def computeOffsets(config):
     start_time = time()
     start_timeP = process_time()
 
-    xvecPath = os.path.join(config.basePath, config.parameterPath, f'xvec{config.filter}.mat')
-    yvecPath = os.path.join(config.basePath, config.parameterPath, f'yvec{config.filter}.mat')
-    qualVectorPath = os.path.join(config.basePath, config.parameterPath, f'qualVector{config.filter}.mat')
-    maxQualFramePath = os.path.join(config.basePath, config.parameterPath, f'maxQualFramePath{config.filter}.mat')
-    refVector = os.path.join(config.basePath, config.parameterPath, f'refVector{config.filter}.mat')
-    refVectorAlign = os.path.join(config.basePath, config.parameterPath, f'refVector{config.align}.mat')
+    xvecPath = os.path.join(config.basePath, config.parameterPath, f'xvec{config.filter}.npy')
+    yvecPath = os.path.join(config.basePath, config.parameterPath, f'yvec{config.filter}.npy')
+    qualVectorPath = os.path.join(config.basePath, config.parameterPath, f'qualVector{config.filter}.npy')
+    maxQualFrameFilePath = os.path.join(config.basePath, config.parameterPath, f'maxQualFrameFile{config.filter}.npy')
+    refVectorPath = os.path.join(config.basePath, config.parameterPath, f'refVector{config.filter}.npy')
+    refVectorAlignPath = os.path.join(config.basePath, config.parameterPath, f'refVector{config.align}.npy')
 
-    if(all([os.path.isfile(f) for f in [xvecPath, yvecPath, qualVectorPath, maxQualFramePath, refVector, refVectorAlign]])):  
-        xvec = loadmat(xvecPath)['xvec'].ravel()
-        yvec = loadmat(yvecPath)['yvec'].ravel()
-        qualVector = loadmat(qualVectorPath)['qualVector']
-        maxQualFramePath = loadmat(maxQualFramePath)['maxQualFramePath'].ravel()
-        refVector = loadmat(refVector)['refVector']
-        refVectorAlign = loadmat(refVectorAlign)['refVector']
+    if(all([os.path.isfile(f) for f in [xvecPath, yvecPath, qualVectorPath, maxQualFrameFilePath, refVectorPath, refVectorAlignPath]])):  
+        print("ok")
+        xvec = np.load(xvecPath, allow_pickle = True).ravel() 
+        yvec = np.load(yvecPath, allow_pickle = True).ravel() 
+        qualVector = np.load(qualVectorPath) 
+        maxQualFrameFile = np.load(maxQualFrameFilePath).ravel() 
+        refVector = np.load(refVectorPath) 
+        refVectorAlign = np.load(refVectorAlignPath) 
 
         qual = qualVector[:,0].T
         background = qualVector[:,1].T
@@ -308,7 +309,7 @@ def computeOffsets(config):
             th = th[discardFrames == 0]
             selectedFrames = selectedFrames[discardFrames == 0]
 
-            maxQualFrame = np.asarray(imread(maxQualFramePath[0], IMREAD_GRAYSCALE))
+            maxQualFrame = np.asarray(imread(maxQualFrameFile[0], IMREAD_GRAYSCALE))
             maxQualFrame = maxQualFrame[config.ROI_y[0]-1:config.ROI_y[1], config.ROI_x[0]-1:config.ROI_x[1]]
 
             end_time = time()
@@ -317,8 +318,8 @@ def computeOffsets(config):
             outString.set('Elapsed time:' + ' ' + f'{end_time - start_time:.2f}' + ' ' + 'CPU time:' + ' ' + f'{end_timeP - start_timeP:.2f}')
         
             offsets = np.array([dx, dy, th, selectedFrames]).T
-            savemat(os.path.join(config.basePath, config.parameterPath, f'offsets{config.filter}.mat'), {'offsets': offsets})
-    
+            np.save(os.path.join(config.basePath, config.parameterPath, f'offsets{config.filter}'), offsets)
+  
             plt.figure(1)
             plt.imshow(maxQualFrame, cmap='gray', vmin = 0, vmax = (255**maxQualFrame.dtype.itemsize))
             plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0, hspace = 0, wspace = 0)
@@ -348,9 +349,9 @@ def computeOffsets(config):
             ax2.legend(['Quality', 'Background'])
             plt.show()
         else:
-            outString.Set('Filter align failure.')
+            outString.set('Filter align failure.')
     else:
-        outString.Set('Missing input files.')
+        outString.set('Missing input files.')
 
 
 def stackImages(config):  
@@ -359,12 +360,12 @@ def stackImages(config):
     start_timeP = process_time()
 
     lightFrameArray = getLights(config, 'lights', config.lightInputFormat)    
-    offsetsPath = os.path.join(config.basePath, config.parameterPath, f'offsets{config.filter}.mat')
-    qualVectorPath = os.path.join(config.basePath, config.parameterPath, f'qualVector{config.filter}.mat')
+    offsetsPath = os.path.join(config.basePath, config.parameterPath, f'offsets{config.filter}.npy')
+    qualVectorPath = os.path.join(config.basePath, config.parameterPath, f'qualVector{config.filter}.npy')
 
     if(len(lightFrameArray)>0 and all([os.path.isfile(f) for f in [offsetsPath, qualVectorPath]])):
-        offsets = loadmat(offsetsPath)['offsets']
-        qualVector = loadmat(qualVectorPath)['qualVector']
+        offsets = np.load(offsetsPath)
+        qualVector = np.load(qualVectorPath)
 
         dx = offsets[:,0].T
         dy = offsets[:,1].T
